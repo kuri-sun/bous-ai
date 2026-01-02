@@ -1,0 +1,82 @@
+substitutions:
+  _REGION: asia-northeast1
+  _REPOSITORY: bousai
+  _IMAGE: bousai-api
+  _SERVICE: bousai-api-service
+  _APP_ENV: production
+  _GEMINI_MODEL: gemini-3-flash-preview
+  # _GEMINI_API_KEY:
+
+steps:
+  # ステップ1: Docker イメージを作成
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "--platform",
+        "linux/amd64",
+        "-t",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA",
+        "-t",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest",
+        "./server",
+      ]
+    id: "build-docker-image"
+
+  # ステップ2: イメージを Artifact Registry へ push
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA",
+      ]
+    id: "push-commit-sha"
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest",
+      ]
+    id: "push-latest"
+
+  # ステップ3: Cloud Run へデプロイ
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: "gcloud"
+    args:
+      [
+        "run",
+        "deploy",
+        "${_SERVICE}",
+        "--image",
+        "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA",
+        "--platform",
+        "managed",
+        "--region",
+        "${_REGION}",
+        "--allow-unauthenticated",
+        "--port=8000",
+        "--memory=1Gi",
+        "--cpu=1",
+        "--max-instances=2",
+        "--set-env-vars",
+        "APP_ENV=${_APP_ENV}",
+        "--set-env-vars",
+        "GEMINI_MODEL=${_GEMINI_MODEL}",
+        "--set-env-vars",
+        "GEMINI_API_KEY=${_GEMINI_API_KEY}",
+        "--quiet",
+      ]
+    id: "deploy-cloud-run"
+
+# Artifact Registry に保存するイメージ
+images:
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:$COMMIT_SHA"
+  - "${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPOSITORY}/${_IMAGE}:latest"
+
+# ビルドオプション
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+# 全体のビルドタイムアウト
+timeout: "1200s"
