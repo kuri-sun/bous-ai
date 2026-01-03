@@ -87,9 +87,7 @@ export function InputAnalyzeForm({
   return (
     <form className="space-y-5" onSubmit={handleAnalyze}>
       <label className="block">
-        <span className="text-sm font-medium text-emerald-800">
-          メモ/議事録（テキスト）
-        </span>
+        <span className="text-sm font-medium text-emerald-800">メモ</span>
         <textarea
           value={textInput}
           onChange={(event) => setTextInput(event.target.value)}
@@ -107,7 +105,7 @@ export function InputAnalyzeForm({
       </label>
       <label className="block">
         <span className="text-sm font-medium text-emerald-800">
-          見本PDF/画像ファイル
+          PDF/画像ファイル
         </span>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <input

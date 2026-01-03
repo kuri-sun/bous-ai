@@ -1,8 +1,8 @@
-import base64
 from typing import Any, Optional
 
 from pydantic import BaseModel
 
+from app.schemas.session import SessionDetail
 
 class FormField(BaseModel):
     id: str
@@ -70,10 +70,5 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
-    filename: str
-    pdf_base64: str
-
-    @classmethod
-    def from_pdf_bytes(cls, pdf_bytes: bytes) -> "GenerateResponse":
-        encoded = base64.b64encode(pdf_bytes).decode("ascii")
-        return cls(filename="manual.pdf", pdf_base64=encoded)
+    pdf_url: Optional[str] = None
+    session: Optional[SessionDetail] = None

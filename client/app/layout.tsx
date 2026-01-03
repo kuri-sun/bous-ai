@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="overflow-hidden text-emerald-950 antialiased">
         <header className="h-16 border-b border-emerald-100 bg-white/90">
           <div className="flex h-full w-full max-w-6xl items-center justify-between px-4">
-            <span className="text-sm font-semibold text-emerald-900">
+            <span className="font-semibold text-emerald-900">
               防災マニュアル作成
             </span>
           </div>

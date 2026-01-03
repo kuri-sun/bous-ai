@@ -1,27 +1,18 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
 
 type GenerateResponse = {
-  filename: string;
-  pdf_base64: string;
+  pdf_url?: string | null;
 };
 
 type MissingInfoFormProps = {
   analyzeResult: AnalyzeResponse | null;
   initialAnswers?: Record<string, string> | null;
-};
-
-const decodeBase64Pdf = (payload: string) => {
-  const binary = atob(payload);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) {
-    bytes[i] = binary.charCodeAt(i);
-  }
-  return new Blob([bytes], { type: "application/pdf" });
 };
 
 const buildInitialAnswers = (
@@ -43,12 +34,12 @@ export function MissingInfoForm({
   analyzeResult,
   initialAnswers,
 }: MissingInfoFormProps) {
+  const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, string>>(() =>
     buildInitialAnswers(analyzeResult, initialAnswers),
   );
   const [error, setError] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const generateMutation = useMutation({
@@ -71,11 +62,11 @@ export function MissingInfoForm({
 
       return (await response.json()) as GenerateResponse;
     },
-    onSuccess: (data) => {
-      const blob = decodeBase64Pdf(data.pdf_base64);
-      const url = URL.createObjectURL(blob);
-      setPdfUrl(url);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      if (analyzeResult?.session_id) {
+        router.push(`/sessions/${analyzeResult.session_id}/summary`);
+      }
     },
     onError: (err) => {
       const message =
@@ -174,17 +165,6 @@ export function MissingInfoForm({
           {isGenerating ? "PDF生成中..." : "PDFを作成"}
         </button>
       </div>
-      {pdfUrl ? (
-        <div>
-          <a
-            href={pdfUrl}
-            download="manual.pdf"
-            className="inline-flex items-center rounded-md border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-800 hover:border-emerald-300"
-          >
-            PDFをダウンロード
-          </a>
-        </div>
-      ) : null}
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
     </form>
   );

@@ -40,7 +40,13 @@ export default function Sidebar() {
           <button
             key={session.id}
             type="button"
-            onClick={() => router.push(`/sessions/${session.id}`)}
+            onClick={() =>
+              router.push(
+                session.status === "done"
+                  ? `/sessions/${session.id}/summary`
+                  : `/sessions/${session.id}`,
+              )
+            }
             className={`w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 ${
               activeId === session.id ? "bg-emerald-50" : ""
             }`}
@@ -51,11 +57,6 @@ export default function Sidebar() {
             <p className="mt-1 text-emerald-700">
               状態: {session.status ?? "step1"}
             </p>
-            {session.pdf_url ? (
-              <span className="mt-2 inline-flex text-emerald-800 underline">
-                PDF
-              </span>
-            ) : null}
           </button>
         ))
       )}

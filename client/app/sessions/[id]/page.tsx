@@ -26,7 +26,7 @@ export default function SessionPage() {
     isLoading,
   } = useQuery({
     queryKey: ["session", sessionId],
-    queryFn: () => fetchSessionDetail(sessionId),
+    queryFn: () => fetchSessionDetail(sessionId as string),
     enabled: Boolean(sessionId),
   });
 
@@ -103,7 +103,9 @@ export default function SessionPage() {
     <section className="bg-white p-8 text-emerald-950">
       <header className="mb-6">
         <h2 className="text-xl font-semibold">
-          {step === 1 ? "入力と解析" : "不足情報入力"}
+          {step === 1
+            ? "マニュアル作成のための情報を入力"
+            : "マニュアル生成にあたり整理すべき情報"}
         </h2>
       </header>
 
