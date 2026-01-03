@@ -20,7 +20,11 @@ export default function SessionPage() {
     analyze: AnalyzeResponse | null;
   }>({ sessionId: null, step: null, analyze: null });
 
-  const { data: sessionDetail, error: sessionError } = useQuery({
+  const {
+    data: sessionDetail,
+    error: sessionError,
+    isLoading,
+  } = useQuery({
     queryKey: ["session", sessionId],
     queryFn: () => fetchSessionDetail(sessionId),
     enabled: Boolean(sessionId),
@@ -85,6 +89,14 @@ export default function SessionPage() {
 
   if (sessionError instanceof NotFoundError || !sessionId) {
     return <NotFound />;
+  }
+
+  if (isLoading && !sessionDetail) {
+    return (
+      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+        読み込み中...
+      </section>
+    );
   }
 
   return (
