@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 
 type FormField = {
   id: string;
@@ -62,8 +62,9 @@ const decodeBase64Pdf = (payload: string) => {
   return new Blob([bytes], { type: "application/pdf" });
 };
 
-export default function Page() {
+export default function SessionPage() {
   const router = useRouter();
+  const params = useParams<{ id?: string }>();
   const [step, setStep] = useState<1 | 2>(1);
   const [textInput, setTextInput] = useState("");
   const [fileDescription, setFileDescription] = useState("");
@@ -192,6 +193,12 @@ export default function Page() {
   useEffect(() => {
     void loadSessions();
   }, []);
+
+  useEffect(() => {
+    if (params?.id) {
+      void loadSessionDetail(params.id);
+    }
+  }, [params?.id]);
 
   const handleAnalyze = async (event: React.FormEvent) => {
     event.preventDefault();

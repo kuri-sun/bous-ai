@@ -75,7 +75,15 @@ async def analyze(
         },
     )
     response = build_extract_response(extracted)
-    update_session(session_id, {"inputs": {"step1_extracted": extracted}})
+    update_session(
+        session_id,
+        {
+            "status": "step2",
+            "inputs": {"step1_extracted": extracted},
+            "form": response.form.model_dump(),
+            "msg": response.msg,
+        },
+    )
     return AnalyzeResponse(
         msg=response.msg,
         form=response.form,

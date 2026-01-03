@@ -54,3 +54,27 @@ def list_sessions(limit: int = 50) -> List[Dict[str, Any]]:
             }
         )
     return sessions
+
+
+def get_session(session_id: str) -> Dict[str, Any] | None:
+    db = _client()
+    doc = db.collection(SESSIONS_COLLECTION).document(session_id).get()
+    if not doc.exists:
+        return None
+    payload = doc.to_dict() or {}
+    created_at = payload.get("created_at")
+    updated_at = payload.get("updated_at")
+    if hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+    if hasattr(updated_at, "isoformat"):
+        updated_at = updated_at.isoformat()
+    return {
+        "id": doc.id,
+        "status": payload.get("status"),
+        "pdf_url": payload.get("pdf_url"),
+        "created_at": created_at,
+        "updated_at": updated_at,
+        "inputs": payload.get("inputs"),
+        "form": payload.get("form"),
+        "msg": payload.get("msg"),
+    }
