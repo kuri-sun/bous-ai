@@ -2,6 +2,7 @@
 
 import { createContext, useContext } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { API_BASE } from "../constants";
 
 type SessionSummary = {
   id: string;
@@ -20,8 +21,6 @@ type SessionsContextValue = {
 const SessionsContext = createContext<SessionsContextValue>({
   sessions: [],
 });
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
 export function SessionsProvider({ children }: { children: React.ReactNode }) {
   const fetchSessions = async () => {
