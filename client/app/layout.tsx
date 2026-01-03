@@ -1,4 +1,6 @@
 import "./globals.css";
+import Providers from "./providers";
+import Sidebar from "./sidebar";
 
 export const metadata = {
   title: "Vertex Chat",
@@ -20,7 +22,14 @@ export default function RootLayout({
             </span>
           </div>
         </header>
-        <div className="h-[calc(100vh-4rem)]">{children}</div>
+        <div className="h-[calc(100vh-4rem)]">
+          <Providers>
+            <div className="grid h-full grid-cols-[240px_1fr]">
+              <Sidebar />
+              <main className="h-full overflow-y-auto">{children}</main>
+            </div>
+          </Providers>
+        </div>
       </body>
     </html>
   );
