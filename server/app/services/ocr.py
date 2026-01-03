@@ -1,8 +1,6 @@
 import json
 import uuid
 from typing import Any
-
-from fastapi import HTTPException, UploadFile
 from google.api_core.exceptions import GoogleAPIError
 from google.cloud import storage, vision
 
@@ -29,22 +27,16 @@ def _detect_text_from_image(image_bytes: bytes) -> str:
     return response.full_text_annotation.text or ""
 
 
-def _detect_text_from_pdf(pdf_bytes: bytes, filename: str) -> str:
+def _detect_text_from_pdf_gcs(gcs_uri: str) -> str:
     settings = get_settings()
     if not settings.gcs_bucket:
         raise RuntimeError("GCS_BUCKET is not set")
 
     job_id = uuid.uuid4().hex
-    upload_name = f"uploads/{job_id}-{filename}"
     output_uri = f"gs://{settings.gcs_bucket}/{settings.gcs_output_prefix}{job_id}/"
 
-    storage_client = storage.Client(project=settings.gcp_project)
-    bucket = storage_client.bucket(settings.gcs_bucket)
-    upload_blob = bucket.blob(upload_name)
-    upload_blob.upload_from_string(pdf_bytes, content_type="application/pdf")
-
     client = vision.ImageAnnotatorClient()
-    gcs_source = vision.GcsSource(uri=f"gs://{settings.gcs_bucket}/{upload_name}")
+    gcs_source = vision.GcsSource(uri=gcs_uri)
     input_config = vision.InputConfig(
         gcs_source=gcs_source,
         mime_type="application/pdf",
@@ -60,6 +52,8 @@ def _detect_text_from_pdf(pdf_bytes: bytes, filename: str) -> str:
     operation.result(timeout=180)
 
     prefix = f"{settings.gcs_output_prefix}{job_id}/"
+    storage_client = storage.Client(project=settings.gcp_project)
+    bucket = storage_client.bucket(settings.gcs_bucket)
     blobs = list(bucket.list_blobs(prefix=prefix))
     extracted_texts: list[str] = []
     for blob in blobs:
@@ -70,17 +64,17 @@ def _detect_text_from_pdf(pdf_bytes: bytes, filename: str) -> str:
 
     for blob in blobs:
         blob.delete()
-    upload_blob.delete()
 
     return "\n".join(text for text in extracted_texts if text)
 
-
-async def detect_text_from_file(upload: UploadFile) -> str:
+def detect_text_from_bytes(
+    file_bytes: bytes, filename: str, content_type: str, gcs_uri: str | None
+) -> str:
     try:
-        file_bytes = await upload.read()
-        filename = upload.filename or "input.pdf"
-        if upload.content_type == "application/pdf" or filename.lower().endswith(".pdf"):
-            return _detect_text_from_pdf(file_bytes, filename)
+        if content_type == "application/pdf" or filename.lower().endswith(".pdf"):
+            if not gcs_uri:
+                raise RuntimeError("GCS URI is required for PDF OCR")
+            return _detect_text_from_pdf_gcs(gcs_uri)
         return _detect_text_from_image(file_bytes)
     except (GoogleAPIError, RuntimeError) as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
+        raise RuntimeError(str(exc)) from exc

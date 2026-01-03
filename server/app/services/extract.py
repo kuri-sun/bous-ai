@@ -11,7 +11,7 @@ from app.services.llm import get_llm
 def _build_extract_prompt(extracted: dict[str, Any]) -> str:
     return (
         "あなたは日本語のマンション用の防災マニュアル作成のために不足情報を特定するアシスタントです。"
-        "`text`がある場合は、防災マニュアル作成のためのメモで、マニュアル作成のための有益な情報が含まれています。"
+        "`memo`がある場合は、防災マニュアル作成のためのメモで、マニュアル作成のための有益な情報が含まれています。"
         "`text_extracted_from_uploaded_file`がある場合は、アップロードされたファイルをGoogle Visionが抽出したものになります。"
         "`description_for_uploaded_file`がある場合は、アップロードされたファイルの説明。"
         "以下のJSONを読み、いざという時に、使える有益なマンション用の防災マニュアル作成にあたって、まだ不足している情報をJSONで返してください。"

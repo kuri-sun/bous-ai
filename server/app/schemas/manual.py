@@ -21,6 +21,7 @@ class AnalyzeResponse(BaseModel):
     msg: str
     form: FormSchema
     extracted: Optional[dict[str, Any]] = None
+    session_id: Optional[str] = None
 
     @classmethod
     def default_form(cls, extracted: Optional[dict[str, Any]] = None) -> "AnalyzeResponse":
@@ -62,6 +63,7 @@ class AnalyzeResponse(BaseModel):
 
 
 class GenerateRequest(BaseModel):
+    session_id: Optional[str] = None
     extracted: Optional[dict[str, Any]] = None
     answers: dict[str, Any]
     source_meta: Optional[dict[str, Any]] = None

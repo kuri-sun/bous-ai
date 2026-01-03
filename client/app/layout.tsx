@@ -12,15 +12,15 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-emerald-50 text-emerald-950 antialiased">
-        <header className="border-b border-emerald-100 bg-white/90">
-          <div className="flex w-full max-w-3xl items-center justify-between px-8 py-4">
+      <body className="overflow-hidden text-emerald-950 antialiased">
+        <header className="h-16 border-b border-emerald-100 bg-white/90">
+          <div className="flex h-full w-full max-w-6xl items-center justify-between px-4">
             <span className="text-sm font-semibold text-emerald-900">
               防災マニュアル作成
             </span>
           </div>
         </header>
-        {children}
+        <div className="h-[calc(100vh-4rem)]">{children}</div>
       </body>
     </html>
   );

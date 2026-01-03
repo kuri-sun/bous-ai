@@ -1,6 +1,7 @@
 fastapi==0.110.0
 google-cloud-storage==2.16.0
 google-cloud-vision==3.7.2
+google-cloud-firestore==2.16.0
 langchain==0.2.6
 langchain-google-genai==1.0.6
 playwright==1.44.0
