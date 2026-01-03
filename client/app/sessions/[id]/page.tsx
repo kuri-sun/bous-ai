@@ -6,53 +6,19 @@ import NotFound from "../../not-found";
 import { useQuery } from "@tanstack/react-query";
 import { InputAnalyzeForm } from "../../../components/InputAnalyzeForm";
 import { MissingInfoForm } from "../../../components/MissingInfoForm";
-import type { AnalyzeResponse, FormSchema } from "../../../types/manual";
-import { API_BASE, SAMPLE_MEMO } from "../../../constants";
-
-type SessionDetail = {
-  id: string;
-  status?: string | null;
-  pdf_url?: string | null;
-  inputs?: Record<string, unknown> | null;
-  form?: FormSchema | null;
-  msg?: string | null;
-};
-
-type SessionDetailResponse = {
-  session: SessionDetail;
-};
-
-class NotFoundError extends Error {
-  status = 404;
-}
-
-const fetchSessionDetail = async (id: string) => {
-  const response = await fetch(`${API_BASE}/api/sessions/${id}`);
-  if (!response.ok) {
-    if (response.status === 404) {
-      throw new NotFoundError("Session not found");
-    }
-    throw new Error("Failed to load session");
-  }
-  return (await response.json()) as SessionDetailResponse;
-};
+import type { AnalyzeResponse } from "../../../types/manual";
+import { SAMPLE_MEMO } from "../../../constants";
+import { fetchSessionDetail, NotFoundError } from "../../../api/sessions";
 
 export default function SessionPage() {
   const params = useParams<{ id?: string }>();
   const sessionId = typeof params?.id === "string" ? params.id : null;
-
-  if (!sessionId) {
-    return <NotFound />;
-  }
-
-  return <SessionPageContent key={sessionId} sessionId={sessionId} />;
-}
-
-function SessionPageContent({ sessionId }: { sessionId: string }) {
   const router = useRouter();
-  const [stepOverride, setStepOverride] = useState<1 | 2 | null>(null);
-  const [analyzeOverride, setAnalyzeOverride] =
-    useState<AnalyzeResponse | null>(null);
+  const [overrideState, setOverrideState] = useState<{
+    sessionId: string | null;
+    step: 1 | 2 | null;
+    analyze: AnalyzeResponse | null;
+  }>({ sessionId: null, step: null, analyze: null });
 
   const { data: sessionDetail, error: sessionError } = useQuery({
     queryKey: ["session", sessionId],
@@ -88,11 +54,16 @@ function SessionPageContent({ sessionId }: { sessionId: string }) {
       msg: typeof session.msg === "string" ? session.msg : "",
       form: session.form,
       extracted: step1Extracted ?? undefined,
+      session_id: session?.id,
     } satisfies AnalyzeResponse;
   }, [session, step1Extracted]);
-  const analyzeResult = analyzeOverride ?? derivedAnalyzeResult;
+  const effectiveOverride =
+    overrideState.sessionId === sessionId
+      ? overrideState
+      : { sessionId: null, step: null, analyze: null };
+  const analyzeResult = effectiveOverride.analyze ?? derivedAnalyzeResult;
   const initialAnswers = useMemo(() => {
-    if (analyzeOverride || !session?.form) {
+    if (effectiveOverride.analyze || !session?.form) {
       return undefined;
     }
     const step2 = (inputs.step2 ?? {}) as Record<string, unknown>;
@@ -102,18 +73,17 @@ function SessionPageContent({ sessionId }: { sessionId: string }) {
       answers[field.id] = typeof value === "string" ? value : "";
     });
     return answers;
-  }, [analyzeOverride, inputs.step2, session]);
-  const step = stepOverride ?? stepFromStatus;
+  }, [effectiveOverride.analyze, inputs.step2, session]);
+  const step = effectiveOverride.step ?? stepFromStatus;
 
   const handleAnalyzed = (data: AnalyzeResponse) => {
-    setAnalyzeOverride(data);
-    setStepOverride(2);
+    setOverrideState({ sessionId, step: 2, analyze: data });
     if (data.session_id) {
       router.push(`/sessions/${data.session_id}`);
     }
   };
 
-  if (sessionError instanceof NotFoundError) {
+  if (sessionError instanceof NotFoundError || !sessionId) {
     return <NotFound />;
   }
 
@@ -135,9 +105,10 @@ function SessionPageContent({ sessionId }: { sessionId: string }) {
         />
       ) : (
         <MissingInfoForm
-          key={`session-missing-${analyzeOverride ? "override" : "session"}`}
+          key={`session-missing-${
+            effectiveOverride.analyze ? "override" : "session"
+          }`}
           analyzeResult={analyzeResult}
-          sessionId={sessionId}
           initialAnswers={initialAnswers}
         />
       )}

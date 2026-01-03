@@ -13,11 +13,9 @@ export default function CreateSessionPage() {
   const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResponse | null>(
     null,
   );
-  const [sessionId, setSessionId] = useState<string | null>(null);
 
   const handleAnalyzed = (data: AnalyzeResponse) => {
     setAnalyzeResult(data);
-    setSessionId(data.session_id ?? null);
     setStep(2);
     if (data.session_id) {
       router.push(`/sessions/${data.session_id}`);
@@ -42,7 +40,6 @@ export default function CreateSessionPage() {
         <MissingInfoForm
           key={analyzeResult ? "create-missing" : "create-empty"}
           analyzeResult={analyzeResult}
-          sessionId={sessionId}
         />
       )}
     </section>

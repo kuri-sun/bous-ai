@@ -12,7 +12,6 @@ type GenerateResponse = {
 
 type MissingInfoFormProps = {
   analyzeResult: AnalyzeResponse | null;
-  sessionId: string | null;
   initialAnswers?: Record<string, string> | null;
 };
 
@@ -42,7 +41,6 @@ const buildInitialAnswers = (
 
 export function MissingInfoForm({
   analyzeResult,
-  sessionId,
   initialAnswers,
 }: MissingInfoFormProps) {
   const [answers, setAnswers] = useState<Record<string, string>>(() =>
@@ -59,7 +57,7 @@ export function MissingInfoForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          session_id: sessionId,
+          session_id: analyzeResult?.session_id,
           extracted: analyzeResult?.extracted ?? null,
           answers,
           source_meta: { source_type: "mixed" },
@@ -94,7 +92,7 @@ export function MissingInfoForm({
     if (!analyzeResult || isGenerating) {
       return;
     }
-    if (!sessionId) {
+    if (!analyzeResult?.session_id) {
       setError("セッションIDが取得できません。");
       return;
     }
@@ -167,7 +165,7 @@ export function MissingInfoForm({
           まず「不足情報を抽出」を実行してください。
         </p>
       )}
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         <button
           type="submit"
           disabled={!analyzeResult || isGenerating}
