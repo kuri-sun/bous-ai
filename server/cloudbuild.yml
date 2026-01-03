@@ -5,6 +5,9 @@ substitutions:
   _SERVICE: bousai-api-service
   _APP_ENV: production
   _GEMINI_MODEL: gemini-3-flash-preview
+  _GCP_PROJECT: your_project_id
+  _GCS_BUCKET: your_bucket_name
+  _GCS_OUTPUT_PREFIX: vision-output
   # _GEMINI_API_KEY:
 
 steps:
@@ -65,6 +68,12 @@ steps:
         "GEMINI_MODEL=${_GEMINI_MODEL}",
         "--set-env-vars",
         "GEMINI_API_KEY=${_GEMINI_API_KEY}",
+        "--set-env-vars",
+        "GCP_PROJECT=${_GCP_PROJECT}",
+        "--set-env-vars",
+        "GCS_BUCKET=${_GCS_BUCKET}",
+        "--set-env-vars",
+        "GCS_OUTPUT_PREFIX=${_GCS_OUTPUT_PREFIX}",
         "--quiet",
       ]
     id: "deploy-cloud-run"

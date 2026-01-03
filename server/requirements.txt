@@ -4,4 +4,5 @@ google-cloud-vision==3.7.2
 langchain==0.2.6
 langchain-google-genai==1.0.6
 playwright==1.44.0
+python-multipart==0.0.9
 uvicorn[standard]==0.29.0

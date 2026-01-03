@@ -2,144 +2,337 @@
 
 import { useMemo, useState } from "react";
 
-type Role = "user" | "assistant";
-
-type Message = {
+type FormField = {
   id: string;
-  role: Role;
-  content: string;
+  label: string;
+  field_type: "text" | "textarea" | "select";
+  required: boolean;
+  placeholder?: string;
+  options?: string[];
 };
 
-type ChatResponse = {
-  reply: string;
+type FormSchema = {
+  fields: FormField[];
+};
+
+type AnalyzeResponse = {
+  msg: string;
+  form: FormSchema;
+  extracted?: Record<string, unknown>;
+};
+
+type GenerateResponse = {
+  filename: string;
+  pdf_base64: string;
 };
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
 
-const createId = () =>
-  `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+const decodeBase64Pdf = (payload: string) => {
+  const binary = atob(payload);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+  return new Blob([bytes], { type: "application/pdf" });
+};
 
 export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: createId(),
-      role: "assistant",
-      content:
-        "Ask anything and I will answer with help from Vertex AI. Try asking for a short plan or a summary.",
-    },
-  ]);
-  const [input, setInput] = useState("");
-  const [isSending, setIsSending] = useState(false);
+  const [step, setStep] = useState<1 | 2>(1);
+  const [textInput, setTextInput] = useState("");
+  const [fileDescription, setFileDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [analyzeResult, setAnalyzeResult] = useState<AnalyzeResponse | null>(
+    null,
+  );
+  const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState("");
 
-  const historyPayload = useMemo(
-    () =>
-      messages.map(({ role, content }) => ({
-        role,
-        content,
-      })),
-    [messages]
-  );
+  const formHint = useMemo(() => {
+    if (!analyzeResult) {
+      return "解析すると不足情報がフォームに表示されます。";
+    }
+    return analyzeResult.msg;
+  }, [analyzeResult]);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleAnalyze = async (event: React.FormEvent) => {
     event.preventDefault();
-    const trimmed = input.trim();
-    if (!trimmed || isSending) {
+    if (isAnalyzing) {
       return;
     }
 
-    const userMessage: Message = {
-      id: createId(),
-      role: "user",
-      content: trimmed,
-    };
+    if (!textInput.trim() && !file) {
+      setError("テキストまたはファイルを入力してください。");
+      return;
+    }
 
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
+    setIsAnalyzing(true);
     setError("");
-    setIsSending(true);
+    setPdfUrl(null);
+
+    const formData = new FormData();
+    formData.append("source_type", "mixed");
+    if (textInput.trim()) {
+      formData.append("text", textInput.trim());
+    }
+    if (fileDescription.trim()) {
+      formData.append("file_description", fileDescription.trim());
+    }
+    if (file) {
+      formData.append("file", file);
+    }
 
     try {
-      const response = await fetch(`${API_BASE}/chat`, {
+      const response = await fetch(`${API_BASE}/api/analyze`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || "解析に失敗しました。");
+      }
+
+      const data: AnalyzeResponse = await response.json();
+      setAnalyzeResult(data);
+      const initialAnswers: Record<string, string> = {};
+      data.form.fields.forEach((field) => {
+        initialAnswers[field.id] = "";
+      });
+      setAnswers(initialAnswers);
+      setStep(2);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "予期しないエラーです。";
+      setError(message);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const handleGenerate = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!analyzeResult || isGenerating) {
+      return;
+    }
+
+    setIsGenerating(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE}/api/generate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: trimmed,
-          history: historyPayload,
+          extracted: analyzeResult.extracted ?? null,
+          answers,
+          source_meta: { source_type: "mixed" },
         }),
       });
 
       if (!response.ok) {
         const text = await response.text();
-        throw new Error(text || "Request failed");
+        throw new Error(text || "PDF生成に失敗しました。");
       }
 
-      const data: ChatResponse = await response.json();
-      const assistantMessage: Message = {
-        id: createId(),
-        role: "assistant",
-        content: data.reply || "No response received.",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      const data: GenerateResponse = await response.json();
+      const blob = decodeBase64Pdf(data.pdf_base64);
+      const url = URL.createObjectURL(blob);
+      setPdfUrl(url);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unexpected error";
+      const message =
+        err instanceof Error ? err.message : "予期しないエラーです。";
       setError(message);
     } finally {
-      setIsSending(false);
+      setIsGenerating(false);
     }
   };
 
   return (
-    <main className="page">
-      <section className="hero">
-        <p className="eyebrow">FastAPI + Vertex AI</p>
-        <h1>Signal Chat</h1>
-        <p className="subtitle">
-          A lightweight CSR chat client wired to your FastAPI service. Every
-          prompt goes straight to Vertex AI.
-        </p>
-      </section>
+    <main className="min-h-[100vh-48px] bg-emerald-50 text-emerald-950">
+      <div className="mx-auto w-full max-w-3xl px-4 py-10">
+        <section className="rounded-lg bg-white p-6 shadow-sm ring-1 ring-emerald-100">
+          <header className="mb-6">
+            <h2 className="text-xl font-semibold">
+              {step === 1 ? "入力と解析" : "不足情報入力"}
+            </h2>
+            {step === 2 ? (
+              <p className="mt-2 text-sm text-emerald-700">{formHint}</p>
+            ) : null}
+          </header>
 
-      <section className="chat">
-        <div className="chat-header">
-          <div>
-            <h2>Conversation</h2>
-            <p>Messages stream back when the server responds.</p>
-          </div>
-          <span className={isSending ? "status live" : "status"}>
-            {isSending ? "Thinking" : "Ready"}
-          </span>
-        </div>
+          {step === 1 ? (
+            <form className="space-y-5" onSubmit={handleAnalyze}>
+              <label className="block">
+                <span className="text-sm font-medium text-emerald-800">
+                  メモ/議事録（テキスト）
+                </span>
+                <textarea
+                  value={textInput}
+                  onChange={(event) => setTextInput(event.target.value)}
+                  placeholder="例: 2024年1月 防災会議で決定した避難場所や連絡体制..."
+                  rows={5}
+                  className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-emerald-800">
+                  見本PDF/画像ファイル
+                </span>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <input
+                    id="sample-file"
+                    type="file"
+                    accept=".pdf,image/*"
+                    onChange={(event) =>
+                      setFile(event.target.files?.[0] ?? null)
+                    }
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="sample-file"
+                    className="inline-flex cursor-pointer items-center rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-900 hover:border-emerald-300"
+                  >
+                    ファイルを選択
+                  </label>
+                  <span className="text-sm text-emerald-700">
+                    {file ? file.name : "選択されていません"}
+                  </span>
+                </div>
+                {file ? (
+                  <small className="mt-2 block text-xs text-emerald-700">
+                    選択中: {file.name}
+                  </small>
+                ) : null}
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-emerald-800">
+                  ファイルの説明
+                </span>
+                <input
+                  type="text"
+                  value={fileDescription}
+                  onChange={(event) => setFileDescription(event.target.value)}
+                  placeholder="例: 前年度の防災マニュアル見本"
+                  className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                />
+              </label>
+              <div className="flex items-center justify-between gap-3">
+                {error ? (
+                  <p className="text-sm text-red-600">{error}</p>
+                ) : (
+                  <span />
+                )}
+                <button
+                  type="submit"
+                  disabled={isAnalyzing}
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isAnalyzing ? "解析中..." : "不足情報を抽出"}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <form className="space-y-6" onSubmit={handleGenerate}>
+              {analyzeResult ? (
+                <div className="space-y-5">
+                  {analyzeResult.form.fields.map((field) => (
+                    <label key={field.id} className="block">
+                      <span className="text-sm font-medium text-emerald-800">
+                        {field.label}
+                        {field.required ? " *" : ""}
+                      </span>
+                      {field.field_type === "textarea" ? (
+                        <textarea
+                          value={answers[field.id] ?? ""}
+                          placeholder={field.placeholder}
+                          rows={4}
+                          onChange={(event) =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [field.id]: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        />
+                      ) : field.field_type === "select" ? (
+                        <select
+                          value={answers[field.id] ?? ""}
+                          onChange={(event) =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [field.id]: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-md border border-emerald-200 bg-white p-2 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        >
+                          <option value="">選択してください</option>
+                          {field.options?.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <input
+                          type="text"
+                          value={answers[field.id] ?? ""}
+                          placeholder={field.placeholder}
+                          onChange={(event) =>
+                            setAnswers((prev) => ({
+                              ...prev,
+                              [field.id]: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                        />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-emerald-700">
+                  まず「不足情報を抽出」を実行してください。
+                </p>
+              )}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="rounded-md border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-800 hover:border-emerald-300"
+                >
+                  入力へ戻る
+                </button>
+                <button
+                  type="submit"
+                  disabled={!analyzeResult || isGenerating}
+                  className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isGenerating ? "PDF生成中..." : "PDFを作成"}
+                </button>
+              </div>
+              {pdfUrl ? (
+                <div>
+                  <a
+                    href={pdfUrl}
+                    download="manual.pdf"
+                    className="inline-flex items-center rounded-md border border-emerald-200 px-4 py-2 text-sm font-medium text-emerald-800 hover:border-emerald-300"
+                  >
+                    PDFをダウンロード
+                  </a>
+                </div>
+              ) : null}
+            </form>
+          )}
+        </section>
 
-        <div className="chat-body">
-          {messages.map((message) => (
-            <div key={message.id} className={`bubble ${message.role}`}>
-              <span className="role">{message.role}</span>
-              <p>{message.content}</p>
-            </div>
-          ))}
-        </div>
-
-        <form className="composer" onSubmit={handleSubmit}>
-          <div className="input-wrap">
-            <textarea
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Ask for a summary, a list, or a quick plan."
-              rows={3}
-            />
-          </div>
-          <div className="composer-footer">
-            <span className="hint">POST {API_BASE}/chat</span>
-            <button type="submit" disabled={isSending}>
-              {isSending ? "Sending" : "Send"}
-            </button>
-          </div>
-          {error ? <p className="error">{error}</p> : null}
-        </form>
-      </section>
+        {step === 2 && error ? (
+          <p className="mt-6 text-sm text-red-600">{error}</p>
+        ) : null}
+      </div>
     </main>
   );
 }

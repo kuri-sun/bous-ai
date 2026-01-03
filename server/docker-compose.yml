@@ -8,7 +8,12 @@ services:
     volumes:
       - ./app:/app/app
       - ./.env:/app/.env:ro
+      - ./creds:/app/creds:ro
     environment:
       - PYTHONUNBUFFERED=1
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - GEMINI_MODEL=${GEMINI_MODEL}
+      - GCP_PROJECT=${GCP_PROJECT}
+      - GCS_BUCKET=${GCS_BUCKET}
+      - GCS_OUTPUT_PREFIX=${GCS_OUTPUT_PREFIX}
+      - GOOGLE_APPLICATION_CREDENTIALS=${GOOGLE_APPLICATION_CREDENTIALS}
