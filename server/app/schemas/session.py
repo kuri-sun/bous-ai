@@ -1,14 +1,14 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 
 class SessionSummary(BaseModel):
     id: str
-    status: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    inputs: Optional[dict[str, Any]] = None
+    status: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    inputs: dict[str, Any] | None = None
 
 
 class SessionsResponse(BaseModel):
@@ -17,12 +17,12 @@ class SessionsResponse(BaseModel):
 
 class SessionDetail(BaseModel):
     id: str
-    status: Optional[str] = None
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
-    inputs: Optional[dict[str, Any]] = None
-    form: Optional[dict[str, Any]] = None
-    msg: Optional[str] = None
+    status: str | None = None
+    created_at: str | None = None
+    updated_at: str | None = None
+    inputs: dict[str, Any] | None = None
+    form: dict[str, Any] | None = None
+    msg: str | None = None
 
 
 class SessionDetailResponse(BaseModel):

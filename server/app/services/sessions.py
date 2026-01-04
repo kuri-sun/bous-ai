@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from google.cloud import firestore
 
@@ -12,7 +12,7 @@ def _client() -> firestore.Client:
     return firestore.Client(project=settings.gcp_project)
 
 
-def create_session(data: Dict[str, Any]) -> str:
+def create_session(data: dict[str, Any]) -> str:
     db = _client()
     doc_ref = db.collection(SESSIONS_COLLECTION).document()
     payload = {
@@ -24,17 +24,17 @@ def create_session(data: Dict[str, Any]) -> str:
     return doc_ref.id
 
 
-def update_session(session_id: str, data: Dict[str, Any]) -> None:
+def update_session(session_id: str, data: dict[str, Any]) -> None:
     db = _client()
     db.collection(SESSIONS_COLLECTION).document(session_id).set(
         {**data, "updated_at": firestore.SERVER_TIMESTAMP}, merge=True
     )
 
 
-def list_sessions(limit: int = 50) -> List[Dict[str, Any]]:
+def list_sessions(limit: int = 50) -> list[dict[str, Any]]:
     db = _client()
     query = db.collection(SESSIONS_COLLECTION).limit(limit)
-    sessions: List[Dict[str, Any]] = []
+    sessions: list[dict[str, Any]] = []
     for doc in query.stream():
         payload = doc.to_dict() or {}
         created_at = payload.get("created_at")
@@ -55,7 +55,7 @@ def list_sessions(limit: int = 50) -> List[Dict[str, Any]]:
     return sessions
 
 
-def get_session(session_id: str) -> Dict[str, Any] | None:
+def get_session(session_id: str) -> dict[str, Any] | None:
     db = _client()
     doc = db.collection(SESSIONS_COLLECTION).document(session_id).get()
     if not doc.exists:

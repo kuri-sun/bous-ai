@@ -1,6 +1,7 @@
 import json
 import uuid
 from typing import Any
+
 from google.api_core.exceptions import GoogleAPIError
 from google.cloud import storage, vision
 
@@ -66,6 +67,7 @@ def _detect_text_from_pdf_gcs(gcs_uri: str) -> str:
         blob.delete()
 
     return "\n".join(text for text in extracted_texts if text)
+
 
 def detect_text_from_bytes(
     file_bytes: bytes, filename: str, content_type: str, gcs_uri: str | None

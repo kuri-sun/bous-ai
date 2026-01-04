@@ -1,16 +1,17 @@
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel
 
 from app.schemas.session import SessionDetail
+
 
 class FormField(BaseModel):
     id: str
     label: str
     field_type: str
     required: bool = True
-    placeholder: Optional[str] = None
-    options: Optional[list[str]] = None
+    placeholder: str | None = None
+    options: list[str] | None = None
 
 
 class FormSchema(BaseModel):
@@ -20,11 +21,11 @@ class FormSchema(BaseModel):
 class AnalyzeResponse(BaseModel):
     msg: str
     form: FormSchema
-    extracted: Optional[dict[str, Any]] = None
-    session_id: Optional[str] = None
+    extracted: dict[str, Any] | None = None
+    session_id: str | None = None
 
     @classmethod
-    def default_form(cls, extracted: Optional[dict[str, Any]] = None) -> "AnalyzeResponse":
+    def default_form(cls, extracted: dict[str, Any] | None = None) -> "AnalyzeResponse":
         form = FormSchema(
             fields=[
                 FormField(
@@ -63,11 +64,11 @@ class AnalyzeResponse(BaseModel):
 
 
 class GenerateRequest(BaseModel):
-    session_id: Optional[str] = None
-    extracted: Optional[dict[str, Any]] = None
+    session_id: str | None = None
+    extracted: dict[str, Any] | None = None
     answers: dict[str, Any]
-    source_meta: Optional[dict[str, Any]] = None
+    source_meta: dict[str, Any] | None = None
 
 
 class GenerateResponse(BaseModel):
-    session: Optional[SessionDetail] = None
+    session: SessionDetail | None = None
