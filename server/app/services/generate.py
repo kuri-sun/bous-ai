@@ -33,8 +33,6 @@ def generate_manual_html(
     return html
 
 
-
-
 async def generate_manual_pdf(html: str) -> bytes:
     async with async_playwright() as playwright:
         browser = await playwright.chromium.launch()

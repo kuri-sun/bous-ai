@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.schemas.session import SessionDetail
 
+
 class FormField(BaseModel):
     id: str
     label: str
@@ -24,7 +25,9 @@ class AnalyzeResponse(BaseModel):
     session_id: Optional[str] = None
 
     @classmethod
-    def default_form(cls, extracted: Optional[dict[str, Any]] = None) -> "AnalyzeResponse":
+    def default_form(
+        cls, extracted: Optional[dict[str, Any]] = None
+    ) -> "AnalyzeResponse":
         form = FormSchema(
             fields=[
                 FormField(

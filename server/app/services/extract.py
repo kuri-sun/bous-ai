@@ -15,7 +15,7 @@ def _build_extract_prompt(extracted: dict[str, Any]) -> str:
         "`text_extracted_from_uploaded_file`がある場合は、アップロードされたファイルをGoogle Visionが抽出したものになります。"
         "`description_for_uploaded_file`がある場合は、アップロードされたファイルの説明。"
         "以下のJSONを読み、いざという時に、使える有益なマンション用の防災マニュアル作成にあたって、まだ不足している情報をJSONで返してください。"
-        "必ず次の形式のみを返します: {\"msg\": \"...\", \"form\": {\"fields\": [...]}}。"
+        '必ず次の形式のみを返します: {"msg": "...", "form": {"fields": [...]}}。'
         "fieldsはid, label, field_type(text|textarea|select), required, placeholder, optionsを含めます。"
         "余計な説明やコードフェンスは不要です。\n\n"
         f"INPUT(JSON):\n{json.dumps(extracted, ensure_ascii=False, indent=2)}"
