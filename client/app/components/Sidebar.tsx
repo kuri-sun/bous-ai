@@ -1,31 +1,26 @@
-"use client";
-
 import { useMemo } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { useSessions } from "./sessions-context";
+import { useLocation, useNavigate } from "react-router";
+import { useSessions } from "../contexts/SessionsContext";
 
-export default function Sidebar() {
-  const router = useRouter();
-  const pathname = usePathname();
+export function Sidebar() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { sessions } = useSessions();
 
   const activeId = useMemo(() => {
-    if (!pathname) {
-      return null;
-    }
-    const parts = pathname.split("/");
+    const parts = location.pathname.split("/");
     if (parts[1] === "sessions" && parts[2]) {
       return parts[2];
     }
     return null;
-  }, [pathname]);
+  }, [location.pathname]);
 
   return (
     <aside className="h-full overflow-y-auto border-r border-emerald-100">
       <div className="px-3 py-3">
         <button
           type="button"
-          onClick={() => router.push("/sessions/create")}
+          onClick={() => navigate("/sessions/create")}
           className="w-full rounded-md bg-emerald-600 px-3 py-2 text-left text-sm font-semibold text-white hover:bg-emerald-700"
         >
           マニュアルを作成
@@ -41,7 +36,7 @@ export default function Sidebar() {
             key={session.id}
             type="button"
             onClick={() =>
-              router.push(
+              navigate(
                 session.status === "done"
                   ? `/sessions/${session.id}/summary`
                   : `/sessions/${session.id}`,

@@ -1,19 +1,16 @@
-"use client";
-
 import { useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import NotFound from "../../not-found";
+import { useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { InputAnalyzeForm } from "../../../components/InputAnalyzeForm";
-import { MissingInfoForm } from "../../../components/MissingInfoForm";
-import type { AnalyzeResponse } from "../../../types/manual";
-import { SAMPLE_MEMO } from "../../../constants";
-import { fetchSessionDetail, NotFoundError } from "../../../api/sessions";
+import { InputAnalyzeForm } from "../../components/InputAnalyzeForm";
+import { MissingInfoForm } from "../../components/MissingInfoForm";
+import type { AnalyzeResponse, FormField } from "../../types/manual";
+import { SAMPLE_MEMO } from "../../constants";
+import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
 
-export default function SessionPage() {
+export default function SessionDetailPage() {
   const params = useParams<{ id?: string }>();
-  const sessionId = typeof params?.id === "string" ? params.id : null;
-  const router = useRouter();
+  const sessionId = typeof params.id === "string" ? params.id : null;
+  const navigate = useNavigate();
   const [overrideState, setOverrideState] = useState<{
     sessionId: string | null;
     step: 1 | 2 | null;
@@ -29,6 +26,22 @@ export default function SessionPage() {
     queryFn: () => fetchSessionDetail(sessionId as string),
     enabled: Boolean(sessionId),
   });
+
+  if (sessionError instanceof NotFoundError || !sessionId) {
+    return (
+      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+        ページが見つかりません。
+      </section>
+    );
+  }
+
+  if (isLoading && !sessionDetail) {
+    return (
+      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+        読み込み中...
+      </section>
+    );
+  }
 
   const session = sessionDetail?.session ?? null;
   const inputs = (session?.inputs ?? {}) as Record<string, unknown>;
@@ -61,6 +74,7 @@ export default function SessionPage() {
       session_id: session?.id,
     } satisfies AnalyzeResponse;
   }, [session, step1Extracted]);
+
   const effectiveOverride =
     overrideState.sessionId === sessionId
       ? overrideState
@@ -72,7 +86,7 @@ export default function SessionPage() {
     }
     const step2 = (inputs.step2 ?? {}) as Record<string, unknown>;
     const answers: Record<string, string> = {};
-    session.form.fields.forEach((field) => {
+    session.form.fields.forEach((field: FormField) => {
       const value = step2[field.id];
       answers[field.id] = typeof value === "string" ? value : "";
     });
@@ -83,21 +97,9 @@ export default function SessionPage() {
   const handleAnalyzed = (data: AnalyzeResponse) => {
     setOverrideState({ sessionId, step: 2, analyze: data });
     if (data.session_id) {
-      router.push(`/sessions/${data.session_id}`);
+      navigate(`/sessions/${data.session_id}`);
     }
   };
-
-  if (sessionError instanceof NotFoundError || !sessionId) {
-    return <NotFound />;
-  }
-
-  if (isLoading && !sessionDetail) {
-    return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
-        読み込み中...
-      </section>
-    );
-  }
 
   return (
     <section className="bg-white p-8 text-emerald-950">
@@ -119,9 +121,7 @@ export default function SessionPage() {
         />
       ) : (
         <MissingInfoForm
-          key={`session-missing-${
-            effectiveOverride.analyze ? "override" : "session"
-          }`}
+          key={`session-missing-${effectiveOverride.analyze ? "override" : "session"}`}
           analyzeResult={analyzeResult}
           initialAnswers={initialAnswers}
         />

@@ -46,9 +46,4 @@ export const fetchSessions = async () => {
   return data.sessions;
 };
 
-export type {
-  SessionDetail,
-  SessionDetailResponse,
-  SessionsResponse,
-  SessionSummary,
-};
+export type { SessionDetail, SessionDetailResponse, SessionsResponse, SessionSummary };

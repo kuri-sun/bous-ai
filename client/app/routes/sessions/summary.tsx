@@ -1,14 +1,11 @@
-"use client";
-
-import { useParams } from "next/navigation";
+import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import NotFound from "../../../not-found";
-import { fetchSessionDetail, NotFoundError } from "../../../../api/sessions";
-import { API_BASE } from "../../../../constants";
+import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
+import { API_BASE } from "../../constants";
 
 export default function SessionSummaryPage() {
   const params = useParams<{ id?: string }>();
-  const sessionId = typeof params?.id === "string" ? params.id : null;
+  const sessionId = typeof params.id === "string" ? params.id : null;
 
   const {
     data: sessionDetail,
@@ -21,7 +18,11 @@ export default function SessionSummaryPage() {
   });
 
   if (sessionError instanceof NotFoundError || !sessionId) {
-    return <NotFound />;
+    return (
+      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+        ページが見つかりません。
+      </section>
+    );
   }
 
   if (isLoading && !sessionDetail) {
