@@ -7,7 +7,10 @@ import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
 
 type GenerateResponse = {
-  pdf_url?: string | null;
+  session?: {
+    id: string;
+    status?: string | null;
+  } | null;
 };
 
 type MissingInfoFormProps = {

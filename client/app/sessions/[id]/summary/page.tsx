@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import NotFound from "../../../not-found";
 import { fetchSessionDetail, NotFoundError } from "../../../../api/sessions";
+import { API_BASE } from "../../../../constants";
 
 export default function SessionSummaryPage() {
   const params = useParams<{ id?: string }>();
@@ -37,9 +38,9 @@ export default function SessionSummaryPage() {
     <section className="bg-white p-8 text-emerald-950">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">生成結果</h2>
-        {session?.pdf_url ? (
+        {session?.status === "done" ? (
           <a
-            href={session.pdf_url}
+            href={`${API_BASE}/api/sessions/${sessionId}/download`}
             download="manual.pdf"
             className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
           >
@@ -48,7 +49,7 @@ export default function SessionSummaryPage() {
         ) : null}
       </header>
 
-      {!session?.pdf_url ? (
+      {session?.status !== "done" ? (
         <p className="text-sm text-emerald-700">
           PDFがまだ生成されていません。
         </p>
