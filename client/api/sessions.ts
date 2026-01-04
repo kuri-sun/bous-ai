@@ -4,7 +4,6 @@ import type { FormSchema } from "../types/manual";
 type SessionDetail = {
   id: string;
   status?: string | null;
-  pdf_url?: string | null;
   inputs?: Record<string, unknown> | null;
   form?: FormSchema | null;
   msg?: string | null;
@@ -17,7 +16,6 @@ type SessionDetailResponse = {
 type SessionSummary = {
   id: string;
   status?: string | null;
-  pdf_url?: string | null;
 };
 
 type SessionsResponse = {

@@ -47,7 +47,6 @@ def list_sessions(limit: int = 50) -> List[Dict[str, Any]]:
             {
                 "id": doc.id,
                 "status": payload.get("status"),
-                "pdf_url": payload.get("pdf_url"),
                 "created_at": created_at,
                 "updated_at": updated_at,
                 "inputs": payload.get("inputs"),
@@ -71,10 +70,21 @@ def get_session(session_id: str) -> Dict[str, Any] | None:
     return {
         "id": doc.id,
         "status": payload.get("status"),
-        "pdf_url": payload.get("pdf_url"),
         "created_at": created_at,
         "updated_at": updated_at,
         "inputs": payload.get("inputs"),
         "form": payload.get("form"),
         "msg": payload.get("msg"),
     }
+
+
+def get_session_pdf_blob_name(session_id: str) -> str | None:
+    db = _client()
+    doc = db.collection(SESSIONS_COLLECTION).document(session_id).get()
+    if not doc.exists:
+        return None
+    payload = doc.to_dict() or {}
+    blob_name = payload.get("pdf_blob_name")
+    if isinstance(blob_name, str) and blob_name:
+        return blob_name
+    return None

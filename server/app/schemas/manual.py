@@ -70,5 +70,4 @@ class GenerateRequest(BaseModel):
 
 
 class GenerateResponse(BaseModel):
-    pdf_url: Optional[str] = None
     session: Optional[SessionDetail] = None
