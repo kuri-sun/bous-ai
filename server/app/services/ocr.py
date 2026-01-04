@@ -1,6 +1,7 @@
 import json
 import uuid
 from typing import Any
+
 from google.api_core.exceptions import GoogleAPIError
 from google.cloud import storage, vision
 

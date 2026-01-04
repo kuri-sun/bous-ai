@@ -1,5 +1,5 @@
 import json
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import HTTPException
 from langchain_core.messages import HumanMessage
@@ -9,20 +9,23 @@ from app.services.llm import get_llm
 
 
 def _build_manual_prompt(
-    answers: dict[str, Any], extracted: Optional[dict[str, Any]] = None
+    answers: dict[str, Any], extracted: dict[str, Any] | None = None
 ) -> str:
     payload = {"answers": answers, "extracted": extracted or {}}
-    return (
+    instructions = (
         "あなたは日本語の防災マニュアルを作成するアシスタントです。"
-        "以下の情報から、A4向けの完成HTML(<!doctype html>から</html>まで)のみを返してください。"
+        "以下の情報から、A4向けの完成HTML(<!doctype html>から</html>まで)"
+        "のみを返してください。"
         "CSSは<head>内の<style>に含め、読みやすい構成にしてください。"
         "余計な説明やコードフェンスは不要です。\n\n"
+    )
+    return instructions + (
         f"INPUT(JSON):\n{json.dumps(payload, ensure_ascii=False, indent=2)}"
     )
 
 
 def generate_manual_html(
-    answers: dict[str, Any], extracted: Optional[dict[str, Any]] = None
+    answers: dict[str, Any], extracted: dict[str, Any] | None = None
 ) -> str:
     llm = get_llm()
     prompt = _build_manual_prompt(answers, extracted)

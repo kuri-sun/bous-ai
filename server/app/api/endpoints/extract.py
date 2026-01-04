@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Annotated, Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
@@ -15,9 +15,9 @@ router = APIRouter()
 @router.post("/analyze", response_model=AnalyzeResponse)
 async def analyze(
     source_type: str = Form("mixed"),
-    text: Optional[str] = Form(None),
-    file_description: Optional[str] = Form(None),
-    file: Optional[UploadFile] = File(None),
+    text: str | None = Form(None),
+    file_description: str | None = Form(None),
+    file: Annotated[UploadFile | None, File()] = None,
 ) -> AnalyzeResponse:
     if not text and not file:
         raise HTTPException(status_code=400, detail="text or file is required")

@@ -1,10 +1,8 @@
-from typing import Optional
-
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 from app.core.config import get_settings
 
-_llm: Optional[ChatGoogleGenerativeAI] = None
+_llm: ChatGoogleGenerativeAI | None = None
 
 
 def get_llm() -> ChatGoogleGenerativeAI:
