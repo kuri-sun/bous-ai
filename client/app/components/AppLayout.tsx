@@ -7,10 +7,7 @@ type AppLayoutProps = {
 };
 
 export function AppLayout({ children }: AppLayoutProps) {
-  const {
-    data: sessions = [],
-    isLoading,
-  } = useQuery({
+  const { data: sessions = [], isLoading } = useQuery({
     queryKey: ["sessions"],
     queryFn: fetchSessions,
     staleTime: 30000,
