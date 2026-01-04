@@ -1,5 +1,5 @@
 export const API_BASE =
-  process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8000";
+  import.meta.env.VITE_API_BASE || "http://localhost:8000";
 
 export const SAMPLE_MEMO =
   "2024年10月16日 マンション理事会 防災関連メモ\n" +

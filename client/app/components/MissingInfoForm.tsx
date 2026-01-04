@@ -1,8 +1,6 @@
-"use client";
-
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
 
@@ -37,7 +35,7 @@ export function MissingInfoForm({
   analyzeResult,
   initialAnswers,
 }: MissingInfoFormProps) {
-  const router = useRouter();
+  const navigate = useNavigate();
   const [answers, setAnswers] = useState<Record<string, string>>(() =>
     buildInitialAnswers(analyzeResult, initialAnswers),
   );
@@ -68,7 +66,7 @@ export function MissingInfoForm({
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
       if (analyzeResult?.session_id) {
-        router.push(`/sessions/${analyzeResult.session_id}/summary`);
+        navigate(`/sessions/${analyzeResult.session_id}/summary`);
       }
     },
     onError: (err) => {

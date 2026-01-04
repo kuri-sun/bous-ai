@@ -1,5 +1,3 @@
-"use client";
-
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AnalyzeResponse } from "../types/manual";
@@ -105,7 +103,7 @@ export function InputAnalyzeForm({
       </label>
       <label className="block">
         <span className="text-sm font-medium text-emerald-800">
-          PDF/画像ファイル
+          見本PDF/画像ファイル
         </span>
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <input

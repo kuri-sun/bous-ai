@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { Link } from "react-router";
 
-export default function HomePage() {
+export default function Home() {
   return (
     <section className="flex h-full items-center justify-center bg-white text-emerald-950">
       <div className="w-full max-w-xl px-6 text-center">
@@ -10,7 +10,7 @@ export default function HomePage() {
         </p>
         <div className="mt-6 flex justify-center">
           <Link
-            href="/sessions/create"
+            to="/sessions/create"
             className="rounded-md bg-emerald-600 px-5 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
           >
             新規作成を始める
