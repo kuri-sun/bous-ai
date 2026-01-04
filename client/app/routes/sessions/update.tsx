@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { InputAnalyzeForm } from "../../components/InputAnalyzeForm";
 import { MissingInfoForm } from "../../components/MissingInfoForm";
+import LoadingIndicator from "../../components/LoadingIndicator";
 import type { AnalyzeResponse, FormField } from "../../types/manual";
 import { SAMPLE_MEMO } from "../../constants";
 import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
@@ -96,7 +97,7 @@ export default function SessionDetailPage() {
   if (isLoading && !sessionDetail) {
     return (
       <section className="flex h-full items-center justify-center bg-white text-emerald-700">
-        読み込み中...
+        <LoadingIndicator />
       </section>
     );
   }
