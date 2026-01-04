@@ -1,11 +1,15 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useSessions } from "../contexts/SessionsContext";
+import type { SessionSummary } from "../api/sessions";
 
-export function Sidebar() {
+type SidebarProps = {
+  sessions: SessionSummary[];
+  isLoading?: boolean;
+};
+
+export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const { sessions } = useSessions();
 
   const activeId = useMemo(() => {
     const parts = location.pathname.split("/");
@@ -26,7 +30,9 @@ export function Sidebar() {
           マニュアルを作成
         </button>
       </div>
-      {sessions.length === 0 ? (
+      {isLoading ? (
+        <p className="px-3 py-2 text-xs text-emerald-700">読み込み中...</p>
+      ) : sessions.length === 0 ? (
         <p className="px-3 py-2 text-xs text-emerald-700">
           セッションがまだありません。
         </p>

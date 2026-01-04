@@ -27,22 +27,6 @@ export default function SessionDetailPage() {
     enabled: Boolean(sessionId),
   });
 
-  if (sessionError instanceof NotFoundError || !sessionId) {
-    return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
-        ページが見つかりません。
-      </section>
-    );
-  }
-
-  if (isLoading && !sessionDetail) {
-    return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
-        読み込み中...
-      </section>
-    );
-  }
-
   const session = sessionDetail?.session ?? null;
   const inputs = (session?.inputs ?? {}) as Record<string, unknown>;
   const inputDefaults = useMemo(() => {
@@ -100,6 +84,22 @@ export default function SessionDetailPage() {
       navigate(`/sessions/${data.session_id}`);
     }
   };
+
+  if (sessionError instanceof NotFoundError || !sessionId) {
+    return (
+      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+        ページが見つかりません。
+      </section>
+    );
+  }
+
+  if (isLoading && !sessionDetail) {
+    return (
+      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+        読み込み中...
+      </section>
+    );
+  }
 
   return (
     <section className="bg-white p-8 text-emerald-950">

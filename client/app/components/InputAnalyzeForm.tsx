@@ -17,7 +17,9 @@ export function InputAnalyzeForm({
   onAnalyzed,
 }: InputAnalyzeFormProps) {
   const [textInput, setTextInput] = useState(defaultTextInput);
-  const [fileDescription, setFileDescription] = useState(defaultFileDescription);
+  const [fileDescription, setFileDescription] = useState(
+    defaultFileDescription,
+  );
   const [file, setFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
