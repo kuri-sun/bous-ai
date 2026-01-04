@@ -4,6 +4,7 @@ import { useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
 import { API_BASE } from "../../constants";
+import LoadingIndicator from "../../components/LoadingIndicator";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -43,7 +44,7 @@ export default function SessionSummaryPage() {
   if (isLoading && !sessionDetail) {
     return (
       <section className="flex h-full items-center justify-center bg-white text-emerald-700">
-        読み込み中...
+        <LoadingIndicator />
       </section>
     );
   }
@@ -72,8 +73,8 @@ export default function SessionSummaryPage() {
       ) : null}
 
       {session?.status === "done" ? (
-        <div className="mt-2 max-w-xl rounded-md border border-emerald-100 bg-white">
-          <div className="flex justify-center overflow-x-auto">
+        <div className="mt-2 min-h-[700px]  max-w-xl rounded-md border border-emerald-100 bg-white">
+          <div className="flex items-center justify-center overflow-x-auto">
             <Document
               file={pdfUrl}
               onLoadSuccess={(data) => {
@@ -81,7 +82,9 @@ export default function SessionSummaryPage() {
                 setPageNumber(1);
               }}
               loading={
-                <p className="text-sm text-emerald-700">読み込み中...</p>
+                <div className="h-[670px] flex flex-col items-center justify-center">
+                  <LoadingIndicator size="sm" label="PDF読み込み中..." />
+                </div>
               }
               error={
                 <p className="text-sm text-red-600">
