@@ -17,10 +17,10 @@ export default function LoadingIndicator({
 }: LoadingIndicatorProps) {
   return (
     <div
-      className={`inline-flex items-center gap-2 text-emerald-700 ${className}`}
+      className={`inline-flex items-center gap-2 text-gray-700 ${className}`}
     >
       <span
-        className={`inline-block rounded-full border-emerald-200 border-t-emerald-600 ${sizeMap[size]} animate-spin`}
+        className={`inline-block rounded-full border-gray-200 border-t-gray-700 ${sizeMap[size]} animate-spin`}
         aria-hidden="true"
       />
       <span className="text-sm font-medium">{label}</span>

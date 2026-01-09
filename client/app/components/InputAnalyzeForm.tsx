@@ -7,6 +7,7 @@ type InputAnalyzeFormProps = {
   sampleMemo: string;
   defaultTextInput?: string;
   defaultFileDescription?: string;
+  sessionId?: string | null;
   onAnalyzed: (result: AnalyzeResponse) => void;
 };
 
@@ -14,6 +15,7 @@ export function InputAnalyzeForm({
   sampleMemo,
   defaultTextInput = "",
   defaultFileDescription = "",
+  sessionId = null,
   onAnalyzed,
 }: InputAnalyzeFormProps) {
   const [textInput, setTextInput] = useState(defaultTextInput);
@@ -78,6 +80,9 @@ export function InputAnalyzeForm({
     if (file) {
       formData.append("file", file);
     }
+    if (sessionId) {
+      formData.append("session_id", sessionId);
+    }
 
     analyzeMutation.mutate(formData);
   };
@@ -85,24 +90,24 @@ export function InputAnalyzeForm({
   return (
     <form className="space-y-5" onSubmit={handleAnalyze}>
       <label className="block">
-        <span className="text-sm font-medium text-emerald-800">メモ</span>
+        <span className="text-sm font-medium text-gray-800">メモ</span>
         <textarea
           value={textInput}
           onChange={(event) => setTextInput(event.target.value)}
           placeholder="例: 2024年1月 防災会議で決定した避難場所や連絡体制..."
           rows={5}
-          className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+          className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
         <button
           type="button"
           onClick={() => setTextInput(sampleMemo)}
-          className="mt-3 inline-flex items-center rounded-md border border-emerald-200 px-3 py-1 text-xs font-medium text-emerald-800 hover:border-emerald-300"
+          className="mt-3 inline-flex items-center rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-800 hover:border-gray-300"
         >
           サンプルを入力
         </button>
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-emerald-800">
+        <span className="text-sm font-medium text-gray-800">
           見本PDF/画像ファイル
         </span>
         <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -115,22 +120,22 @@ export function InputAnalyzeForm({
           />
           <label
             htmlFor="sample-file"
-            className="inline-flex cursor-pointer items-center rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-900 hover:border-emerald-300"
+            className="inline-flex cursor-pointer items-center rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-900 hover:border-gray-300"
           >
             ファイルを選択
           </label>
-          <span className="text-sm text-emerald-700">
+          <span className="text-sm text-gray-700">
             {file ? file.name : "選択されていません"}
           </span>
         </div>
         {file ? (
-          <small className="mt-2 block text-xs text-emerald-700">
+          <small className="mt-2 block text-xs text-gray-700">
             選択中: {file.name}
           </small>
         ) : null}
       </label>
       <label className="block">
-        <span className="text-sm font-medium text-emerald-800">
+        <span className="text-sm font-medium text-gray-800">
           ファイルの説明
         </span>
         <input
@@ -138,7 +143,7 @@ export function InputAnalyzeForm({
           value={fileDescription}
           onChange={(event) => setFileDescription(event.target.value)}
           placeholder="例: 前年度の防災マニュアル見本"
-          className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+          className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
       </label>
       <div className="flex items-center justify-between gap-3">
@@ -146,7 +151,7 @@ export function InputAnalyzeForm({
         <button
           type="submit"
           disabled={isAnalyzing}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isAnalyzing ? "解析中..." : "不足情報を抽出"}
         </button>

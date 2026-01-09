@@ -3,6 +3,7 @@ import type { FormSchema } from "../types/manual";
 
 type SessionDetail = {
   id: string;
+  name?: string | null;
   status?: string | null;
   inputs?: Record<string, unknown> | null;
   form?: FormSchema | null;
@@ -15,6 +16,7 @@ type SessionDetailResponse = {
 
 type SessionSummary = {
   id: string;
+  name?: string | null;
   status?: string | null;
 };
 
@@ -44,6 +46,19 @@ export const fetchSessions = async () => {
   }
   const data = (await response.json()) as SessionsResponse;
   return data.sessions;
+};
+
+export const createSession = async (name: string) => {
+  const response = await fetch(`${API_BASE}/api/sessions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name }),
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "セッションの作成に失敗しました。");
+  }
+  return (await response.json()) as SessionDetailResponse;
 };
 
 export type {

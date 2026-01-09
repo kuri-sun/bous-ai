@@ -21,12 +21,12 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
   }, [location.pathname]);
 
   return (
-    <aside className="h-full overflow-y-auto border-r border-emerald-100">
+    <aside className="h-full overflow-y-auto border-r border-gray-200">
       <div className="px-3 py-3">
         <button
           type="button"
           onClick={() => navigate("/sessions/create")}
-          className="w-full rounded-md bg-emerald-600 px-3 py-2 text-left text-sm font-semibold text-white hover:bg-emerald-700"
+          className="w-full rounded-md bg-gray-900 px-3 py-2 text-left text-sm font-semibold text-white hover:bg-gray-800"
         >
           マニュアルを作成
         </button>
@@ -36,33 +36,38 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
           <LoadingIndicator size="sm" label="読み込み中" />
         </div>
       ) : sessions.length === 0 ? (
-        <p className="px-3 py-2 text-xs text-emerald-700">
+        <p className="px-3 py-2 text-xs text-gray-700">
           セッションがまだありません。
         </p>
       ) : (
-        sessions.map((session) => (
-          <button
-            key={session.id}
-            type="button"
-            onClick={() =>
-              navigate(
-                session.status === "done"
-                  ? `/sessions/${session.id}/summary`
-                  : `/sessions/${session.id}`,
-              )
-            }
-            className={`w-full px-3 py-2 text-left text-sm hover:bg-emerald-50 ${
-              activeId === session.id ? "bg-emerald-50" : ""
-            }`}
-          >
-            <p className="font-semibold text-emerald-900">
-              {session.id.slice(0, 8)}
-            </p>
-            <p className="mt-1 text-emerald-700">
-              状態: {session.status ?? "step1"}
-            </p>
-          </button>
-        ))
+        sessions.map((session) => {
+          const trimmedName = session.name?.trim();
+          const displayName = trimmedName
+            ? trimmedName
+            : `セッション ${session.id.slice(0, 8)}`;
+          return (
+            <button
+              key={session.id}
+              type="button"
+              onClick={() =>
+                navigate(
+                  session.status === "done"
+                    ? `/sessions/${session.id}/summary`
+                    : `/sessions/${session.id}`,
+                )
+              }
+              className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+                activeId === session.id ? "bg-gray-50" : ""
+              }`}
+            >
+              <p className="font-semibold text-gray-900">{displayName}</p>
+              <p className="mt-1 text-xs text-gray-700">
+                ID: {session.id.slice(0, 8)} ・ 状態:{" "}
+                {session.status ?? "step1"}
+              </p>
+            </button>
+          );
+        })
       )}
     </aside>
   );

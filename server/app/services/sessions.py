@@ -46,6 +46,7 @@ def list_sessions(limit: int = 50) -> list[dict[str, Any]]:
         sessions.append(
             {
                 "id": doc.id,
+                "name": payload.get("name"),
                 "status": payload.get("status"),
                 "created_at": created_at,
                 "updated_at": updated_at,
@@ -69,6 +70,7 @@ def get_session(session_id: str) -> dict[str, Any] | None:
         updated_at = updated_at.isoformat()
     return {
         "id": doc.id,
+        "name": payload.get("name"),
         "status": payload.get("status"),
         "created_at": created_at,
         "updated_at": updated_at,

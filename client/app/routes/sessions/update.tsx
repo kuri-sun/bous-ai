@@ -88,7 +88,7 @@ export default function SessionDetailPage() {
 
   if (sessionError instanceof NotFoundError || !sessionId) {
     return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+      <section className="flex h-full items-center justify-center bg-white text-gray-700">
         ページが見つかりません。
       </section>
     );
@@ -96,14 +96,14 @@ export default function SessionDetailPage() {
 
   if (isLoading && !sessionDetail) {
     return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+      <section className="flex h-full items-center justify-center bg-white text-gray-700">
         <LoadingIndicator />
       </section>
     );
   }
 
   return (
-    <section className="bg-white p-8 text-emerald-950">
+    <section className="bg-white p-8 text-gray-900">
       <header className="mb-6">
         <h2 className="text-xl font-semibold">
           {step === 1
@@ -118,6 +118,7 @@ export default function SessionDetailPage() {
           sampleMemo={SAMPLE_MEMO}
           defaultTextInput={inputDefaults.memo}
           defaultFileDescription={inputDefaults.fileDescription}
+          sessionId={sessionId}
           onAnalyzed={handleAnalyzed}
         />
       ) : (
