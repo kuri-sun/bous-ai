@@ -100,7 +100,7 @@ export function MissingInfoForm({
         <div className="space-y-5">
           {analyzeResult.form.fields.map((field) => (
             <label key={field.id} className="block">
-              <span className="text-sm font-medium text-emerald-800">
+              <span className="text-sm font-medium text-gray-800">
                 {field.label}
                 {field.required ? " *" : ""}
               </span>
@@ -115,7 +115,7 @@ export function MissingInfoForm({
                       [field.id]: event.target.value,
                     }))
                   }
-                  className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 />
               ) : field.field_type === "select" ? (
                 <select
@@ -126,7 +126,7 @@ export function MissingInfoForm({
                       [field.id]: event.target.value,
                     }))
                   }
-                  className="mt-2 w-full rounded-md border border-emerald-200 bg-white p-2 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  className="mt-2 w-full rounded-md border border-gray-200 bg-white p-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 >
                   <option value="">選択してください</option>
                   {field.options?.map((option) => (
@@ -146,14 +146,14 @@ export function MissingInfoForm({
                       [field.id]: event.target.value,
                     }))
                   }
-                  className="mt-2 w-full rounded-md border border-emerald-200 p-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-1 focus:ring-emerald-600"
+                  className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 />
               )}
             </label>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-emerald-700">
+        <p className="text-sm text-gray-700">
           まず「不足情報を抽出」を実行してください。
         </p>
       )}
@@ -161,7 +161,7 @@ export function MissingInfoForm({
         <button
           type="submit"
           disabled={!analyzeResult || isGenerating}
-          className="rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isGenerating ? "PDF生成中..." : "PDFを作成"}
         </button>

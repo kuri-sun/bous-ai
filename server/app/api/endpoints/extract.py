@@ -6,7 +6,7 @@ from app.core.config import get_settings
 from app.schemas.manual import AnalyzeResponse
 from app.services.extract import build_extract_response
 from app.services.ocr import detect_text_from_bytes
-from app.services.sessions import create_session, update_session
+from app.services.sessions import create_session, get_session, update_session
 from app.services.storage import upload_bytes
 
 router = APIRouter()
@@ -16,8 +16,8 @@ router = APIRouter()
 async def analyze(
     source_type: str = Form("mixed"),
     text: str | None = Form(None),
-    file_description: str | None = Form(None),
     file: Annotated[UploadFile | None, File()] = None,
+    session_id: str | None = Form(None),
 ) -> AnalyzeResponse:
     if not text and not file:
         raise HTTPException(status_code=400, detail="text or file is required")
@@ -28,7 +28,13 @@ async def analyze(
         "has_file": bool(file),
     }
 
-    session_id = create_session({"status": "step1"})
+    if session_id:
+        session = get_session(session_id)
+        if not session:
+            raise HTTPException(status_code=404, detail="Session not found")
+        update_session(session_id, {"status": "step1"})
+    else:
+        session_id = create_session({"status": "step1"})
     if text:
         extracted["memo"] = text
 
@@ -57,16 +63,12 @@ async def analyze(
         extracted["uploaded_file_content_type"] = content_type
         extracted["text_extracted_from_uploaded_file"] = extracted_text
 
-    if file_description:
-        extracted["description_for_uploaded_file"] = file_description
-
     update_session(
         session_id,
         {
             "inputs": {
                 "step1": {
                     "memo": text,
-                    "file_description": file_description,
                     "uploaded_file_gcs_uri": file_gcs_uri,
                     "uploaded_file_name": file.filename if file else None,
                     "uploaded_file_content_type": file.content_type if file else None,

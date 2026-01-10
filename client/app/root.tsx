@@ -34,7 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <Meta />
         <Links />
       </head>
-      <body className="overflow-hidden text-emerald-950 antialiased">
+      <body className="overflow-hidden text-gray-900 antialiased">
         <Providers>
           <AppLayout>{children}</AppLayout>
         </Providers>

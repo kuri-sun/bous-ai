@@ -2,9 +2,12 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.schemas.place import PlaceDetail
+
 
 class SessionSummary(BaseModel):
     id: str
+    place: PlaceDetail | None = None
     status: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
@@ -17,12 +20,17 @@ class SessionsResponse(BaseModel):
 
 class SessionDetail(BaseModel):
     id: str
+    place: PlaceDetail | None = None
     status: str | None = None
     created_at: str | None = None
     updated_at: str | None = None
     inputs: dict[str, Any] | None = None
     form: dict[str, Any] | None = None
     msg: str | None = None
+
+
+class SessionCreateRequest(BaseModel):
+    place: PlaceDetail
 
 
 class SessionDetailResponse(BaseModel):

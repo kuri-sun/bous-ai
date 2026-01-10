@@ -6,8 +6,17 @@ from google.api_core.exceptions import NotFound
 from google.cloud import storage
 
 from app.core.config import get_settings
-from app.schemas.session import SessionDetailResponse, SessionsResponse
-from app.services.sessions import get_session, get_session_pdf_blob_name, list_sessions
+from app.schemas.session import (
+    SessionCreateRequest,
+    SessionDetailResponse,
+    SessionsResponse,
+)
+from app.services.sessions import (
+    create_session,
+    get_session,
+    get_session_pdf_blob_name,
+    list_sessions,
+)
 
 router = APIRouter()
 
@@ -22,6 +31,17 @@ def session_detail(session_id: str) -> SessionDetailResponse:
     session = get_session(session_id)
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
+    return SessionDetailResponse(session=session)
+
+
+@router.post("/sessions", response_model=SessionDetailResponse)
+def create_session_entry(request: SessionCreateRequest) -> SessionDetailResponse:
+    if not request.place or not request.place.place_id:
+        raise HTTPException(status_code=400, detail="place is required")
+    session_id = create_session(
+        {"status": "step1", "place": request.place.model_dump()}
+    )
+    session = get_session(session_id)
     return SessionDetailResponse(session=session)
 
 

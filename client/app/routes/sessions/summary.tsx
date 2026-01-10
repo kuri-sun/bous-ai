@@ -35,7 +35,7 @@ export default function SessionSummaryPage() {
 
   if (sessionError instanceof NotFoundError || !sessionId) {
     return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+      <section className="flex h-full items-center justify-center bg-white text-gray-700">
         ページが見つかりません。
       </section>
     );
@@ -43,7 +43,7 @@ export default function SessionSummaryPage() {
 
   if (isLoading && !sessionDetail) {
     return (
-      <section className="flex h-full items-center justify-center bg-white text-emerald-700">
+      <section className="flex h-full items-center justify-center bg-white text-gray-700">
         <LoadingIndicator />
       </section>
     );
@@ -52,14 +52,14 @@ export default function SessionSummaryPage() {
   const session = sessionDetail?.session ?? null;
 
   return (
-    <section className="bg-white p-8 text-emerald-950">
+    <section className="bg-white p-8 text-gray-900">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">生成結果</h2>
         {session?.status === "done" ? (
           <a
             href={pdfUrl}
             download="manual.pdf"
-            className="inline-flex items-center rounded-md bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+            className="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
           >
             PDFをダウンロード
           </a>
@@ -67,13 +67,11 @@ export default function SessionSummaryPage() {
       </header>
 
       {session?.status !== "done" ? (
-        <p className="text-sm text-emerald-700">
-          PDFがまだ生成されていません。
-        </p>
+        <p className="text-sm text-gray-700">PDFがまだ生成されていません。</p>
       ) : null}
 
       {session?.status === "done" ? (
-        <div className="mt-2 min-h-[700px]  max-w-xl rounded-md border border-emerald-100 bg-white">
+        <div className="mt-2 min-h-[700px]  max-w-xl rounded-md border border-gray-200 bg-white">
           <div className="flex items-center justify-center overflow-x-auto">
             <Document
               file={pdfUrl}
@@ -101,13 +99,13 @@ export default function SessionSummaryPage() {
             </Document>
           </div>
           {pageCount ? (
-            <div className="px-4 pb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-emerald-600">
+            <div className="px-4 pb-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setPageNumber((prev) => Math.max(1, prev - 1))}
                   disabled={pageNumber <= 1}
-                  className="rounded-md border border-emerald-200 px-3 py-1 text-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-gray-200 px-3 py-1 text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   前へ
                 </button>
@@ -117,7 +115,7 @@ export default function SessionSummaryPage() {
                     setPageNumber((prev) => Math.min(pageCount, prev + 1))
                   }
                   disabled={pageNumber >= pageCount}
-                  className="rounded-md border border-emerald-200 px-3 py-1 text-emerald-800 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-md border border-gray-200 px-3 py-1 text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   次へ
                 </button>
