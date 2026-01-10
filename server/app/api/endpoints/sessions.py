@@ -36,10 +36,11 @@ def session_detail(session_id: str) -> SessionDetailResponse:
 
 @router.post("/sessions", response_model=SessionDetailResponse)
 def create_session_entry(request: SessionCreateRequest) -> SessionDetailResponse:
-    name = request.name.strip()
-    if not name:
-        raise HTTPException(status_code=400, detail="name is required")
-    session_id = create_session({"status": "step1", "name": name})
+    if not request.place or not request.place.place_id:
+        raise HTTPException(status_code=400, detail="place is required")
+    session_id = create_session(
+        {"status": "step1", "place": request.place.model_dump()}
+    )
     session = get_session(session_id)
     return SessionDetailResponse(session=session)
 

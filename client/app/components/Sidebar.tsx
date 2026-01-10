@@ -41,10 +41,10 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
         </p>
       ) : (
         sessions.map((session) => {
-          const trimmedName = session.name?.trim();
-          const displayName = trimmedName
-            ? trimmedName
-            : `セッション ${session.id.slice(0, 8)}`;
+          const placeName = session.place?.name?.trim();
+          const placeAddress = session.place?.formatted_address?.trim();
+          const displayName =
+            placeName ?? placeAddress ?? `セッション ${session.id.slice(0, 8)}`;
           return (
             <button
               key={session.id}
@@ -62,8 +62,7 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
             >
               <p className="font-semibold text-gray-900">{displayName}</p>
               <p className="mt-1 text-xs text-gray-700">
-                ID: {session.id.slice(0, 8)} ・ 状態:{" "}
-                {session.status ?? "step1"}
+                状態: {session.status ?? "step1"}
               </p>
             </button>
           );

@@ -1,7 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { useQuery } from "@tanstack/react-query";
-import { InputAnalyzeForm } from "../../components/InputAnalyzeForm";
+import {
+  InputAnalyzeForm,
+  type InputAnalyzeFormHandle,
+} from "../../components/InputAnalyzeForm";
 import { MissingInfoForm } from "../../components/MissingInfoForm";
 import LoadingIndicator from "../../components/LoadingIndicator";
 import type { AnalyzeResponse, FormField } from "../../types/manual";
@@ -17,6 +20,7 @@ export default function SessionDetailPage() {
     step: 1 | 2 | null;
     analyze: AnalyzeResponse | null;
   }>({ sessionId: null, step: null, analyze: null });
+  const analyzeFormRef = useRef<InputAnalyzeFormHandle | null>(null);
 
   const {
     data: sessionDetail,
@@ -34,10 +38,6 @@ export default function SessionDetailPage() {
     const step1 = (session?.inputs?.step1 ?? {}) as Record<string, unknown>;
     return {
       memo: typeof step1.memo === "string" ? step1.memo : "",
-      fileDescription:
-        typeof step1.file_description === "string"
-          ? step1.file_description
-          : "",
     };
   }, [session?.inputs]);
   const step1Extracted = (session?.inputs?.step1_extracted ?? null) as Record<
@@ -104,20 +104,29 @@ export default function SessionDetailPage() {
 
   return (
     <section className="bg-white p-8 text-gray-900">
-      <header className="mb-6">
+      <header className="mb-6 flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">
           {step === 1
             ? "マニュアル作成のための情報を入力"
             : "マニュアル生成にあたり整理すべき情報"}
         </h2>
+        {step === 1 ? (
+          <button
+            type="button"
+            onClick={() => analyzeFormRef.current?.fillSample()}
+            className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-800 hover:border-gray-300"
+          >
+            サンプルを入力
+          </button>
+        ) : null}
       </header>
 
       {step === 1 ? (
         <InputAnalyzeForm
           key={`session-input-${sessionId}`}
+          ref={analyzeFormRef}
           sampleMemo={SAMPLE_MEMO}
           defaultTextInput={inputDefaults.memo}
-          defaultFileDescription={inputDefaults.fileDescription}
           sessionId={sessionId}
           onAnalyzed={handleAnalyzed}
         />

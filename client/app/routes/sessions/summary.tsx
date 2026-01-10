@@ -67,9 +67,7 @@ export default function SessionSummaryPage() {
       </header>
 
       {session?.status !== "done" ? (
-        <p className="text-sm text-gray-700">
-          PDFがまだ生成されていません。
-        </p>
+        <p className="text-sm text-gray-700">PDFがまだ生成されていません。</p>
       ) : null}
 
       {session?.status === "done" ? (

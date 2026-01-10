@@ -16,7 +16,6 @@ router = APIRouter()
 async def analyze(
     source_type: str = Form("mixed"),
     text: str | None = Form(None),
-    file_description: str | None = Form(None),
     file: Annotated[UploadFile | None, File()] = None,
     session_id: str | None = Form(None),
 ) -> AnalyzeResponse:
@@ -64,16 +63,12 @@ async def analyze(
         extracted["uploaded_file_content_type"] = content_type
         extracted["text_extracted_from_uploaded_file"] = extracted_text
 
-    if file_description:
-        extracted["description_for_uploaded_file"] = file_description
-
     update_session(
         session_id,
         {
             "inputs": {
                 "step1": {
                     "memo": text,
-                    "file_description": file_description,
                     "uploaded_file_gcs_uri": file_gcs_uri,
                     "uploaded_file_name": file.filename if file else None,
                     "uploaded_file_content_type": file.content_type if file else None,

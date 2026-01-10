@@ -1,9 +1,10 @@
 import { API_BASE } from "../constants";
 import type { FormSchema } from "../types/manual";
+import type { PlaceDetail } from "../types/place";
 
 type SessionDetail = {
   id: string;
-  name?: string | null;
+  place?: PlaceDetail | null;
   status?: string | null;
   inputs?: Record<string, unknown> | null;
   form?: FormSchema | null;
@@ -16,7 +17,7 @@ type SessionDetailResponse = {
 
 type SessionSummary = {
   id: string;
-  name?: string | null;
+  place?: PlaceDetail | null;
   status?: string | null;
 };
 
@@ -48,11 +49,11 @@ export const fetchSessions = async () => {
   return data.sessions;
 };
 
-export const createSession = async (name: string) => {
+export const createSession = async (place: PlaceDetail) => {
   const response = await fetch(`${API_BASE}/api/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify({ place }),
   });
   if (!response.ok) {
     const text = await response.text();
