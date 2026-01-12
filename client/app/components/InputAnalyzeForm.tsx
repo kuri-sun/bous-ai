@@ -58,6 +58,11 @@ export const InputAnalyzeForm = forwardRef<
     } = useForm<FormValues>({
       defaultValues: { textInput: defaultTextInput, file: null },
     });
+    const {
+      ref: fileRef,
+      onChange: fileOnChange,
+      ...fileRegister
+    } = register("file");
     const file = watch("file");
 
     const analyzeMutation = useMutation({
@@ -168,8 +173,10 @@ export const InputAnalyzeForm = forwardRef<
               id="sample-file"
               type="file"
               accept=".pdf,image/*"
-              {...register("file")}
+              ref={fileRef}
+              {...fileRegister}
               onChange={(event) => {
+                fileOnChange(event);
                 const newFile = event.target.files?.[0] ?? null;
                 setValue("file", newFile, { shouldValidate: true });
                 clearErrors("root");

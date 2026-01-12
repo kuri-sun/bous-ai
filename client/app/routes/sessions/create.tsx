@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import { fetchPlaceAutocomplete, fetchPlaceDetails } from "../../api/places";
 import { createSession } from "../../api/sessions";
 import { Button } from "../../components/ui/Button";
@@ -11,25 +12,32 @@ import type { PlaceDetail, PlacePrediction } from "../../types/place";
 export default function SessionCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [searchInput, setSearchInput] = useState("");
+  const {
+    register,
+    watch,
+    setError,
+    clearErrors,
+    formState: { errors },
+  } = useForm<{ search: string }>({
+    defaultValues: { search: "" },
+  });
+  const searchInput = watch("search") ?? "";
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
-  const [searchError, setSearchError] = useState("");
 
   const createMutation = useMutation({
     mutationFn: (place: PlaceDetail) => createSession(place),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      setSearchError("");
-      setSearchInput("");
+      clearErrors("root");
       setPredictions([]);
       navigate(`/sessions/${data.session.id}`);
     },
     onError: (err) => {
       const message =
         err instanceof Error ? err.message : "予期しないエラーです。";
-      setSearchError(message);
+      setError("root", { type: "server", message });
     },
   });
 
@@ -37,7 +45,7 @@ export default function SessionCreatePage() {
     const trimmed = searchInput.trim();
     if (!trimmed) {
       setPredictions([]);
-      setSearchError("");
+      clearErrors("root");
       return;
     }
     setIsSearching(true);
@@ -49,14 +57,14 @@ export default function SessionCreatePage() {
           controller.signal,
         );
         setPredictions(results);
-        setSearchError("");
+        clearErrors("root");
       } catch (err) {
         if ((err as Error).name === "AbortError") {
           return;
         }
         const message =
           err instanceof Error ? err.message : "予期しないエラーです。";
-        setSearchError(message);
+        setError("root", { type: "server", message });
       } finally {
         setIsSearching(false);
       }
@@ -65,18 +73,18 @@ export default function SessionCreatePage() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [searchInput]);
+  }, [searchInput, clearErrors, setError]);
 
   const handleSelect = async (prediction: PlacePrediction) => {
     setIsFetchingDetail(true);
-    setSearchError("");
+    clearErrors("root");
     try {
       const place = await fetchPlaceDetails(prediction.place_id);
       createMutation.mutate(place);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "予期しないエラーです。";
-      setSearchError(message);
+      setError("root", { type: "server", message });
     } finally {
       setIsFetchingDetail(false);
     }
@@ -98,13 +106,14 @@ export default function SessionCreatePage() {
               <TextInput
                 id="place-search"
                 type="text"
-                value={searchInput}
-                onChange={(event) => setSearchInput(event.target.value)}
+                {...register("search")}
                 placeholder="例: XXマンション"
               />
             </div>
-            {searchError ? (
-              <p className="text-sm text-red-600">{searchError}</p>
+            {errors.root?.message ? (
+              <p className="text-sm text-red-600">
+                {String(errors.root.message)}
+              </p>
             ) : null}
             {isSearching ? (
               <p className="text-xs text-gray-600">検索中...</p>
@@ -134,7 +143,7 @@ export default function SessionCreatePage() {
             {searchInput.trim() &&
             predictions.length === 0 &&
             !isSearching &&
-            !searchError ? (
+            !errors.root ? (
               <p className="text-xs text-gray-600">
                 候補が見つかりませんでした。
               </p>
