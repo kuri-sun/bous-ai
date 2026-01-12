@@ -259,7 +259,7 @@ export default function SessionSummaryPage() {
               {agentic?.search?.result ? (
                 <div className="space-y-2 text-sm text-gray-700">
                   <p className="text-xs text-gray-500">
-                    検索条件: {agentic.search.query}（{agentic.search.scope}）
+                    検索条件: {agentic.search.query}
                   </p>
                   <a
                     href={agentic.search.result.link}

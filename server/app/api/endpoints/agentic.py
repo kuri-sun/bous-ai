@@ -33,7 +33,7 @@ def _coerce_history(raw_history: list[dict] | None) -> list[dict[str, str]]:
     for item in raw_history or []:
         role = item.get("role")
         content = item.get("content")
-        if role in {"assistant", "user"} and isinstance(content, str) and content.strip():
+    if role in {"assistant", "user"} and isinstance(content, str) and content.strip():
             history.append({"role": role, "content": content.strip()})
     return history
 

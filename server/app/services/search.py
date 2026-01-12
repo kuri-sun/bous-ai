@@ -79,13 +79,19 @@ def _build_query(
             queries.append(
                 (
                     "city",
-                    f"{city} マンション 防災マニュアル site:{city_slug}.{pref_slug}.jp filetype:pdf",
+                    (
+                        f"{city} マンション 防災マニュアル "
+                        f"site:{city_slug}.{pref_slug}.jp filetype:pdf"
+                    ),
                 )
             )
             queries.append(
                 (
                     "city",
-                    f"{city} マンション 防災マニュアル site:city.{city_slug}.{pref_slug}.jp filetype:pdf",
+                    (
+                        f"{city} マンション 防災マニュアル "
+                        f"site:city.{city_slug}.{pref_slug}.jp filetype:pdf"
+                    ),
                 )
             )
     if prefecture:
@@ -164,7 +170,9 @@ def search_official_manual(
             try:
                 with urllib.request.urlopen(link, timeout=15) as response:
                     file_bytes = response.read()
-                    content_type = response.headers.get_content_type() or "application/pdf"
+                    content_type = (
+                        response.headers.get_content_type() or "application/pdf"
+                    )
                 blob_name = (
                     f"search_cache/{scope}/{urllib.parse.quote_plus(query)}/manual.pdf"
                 )
