@@ -10,6 +10,10 @@ import {
 import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
 import { API_BASE } from "../../constants";
 import type { AgenticState } from "../../types/agentic";
+import { Button, buttonClasses } from "../../components/ui/Button";
+import { Card } from "../../components/ui/Card";
+import { CenteredPageState } from "../../components/ui/CenteredPageState";
+import { Textarea } from "../../components/ui/Form";
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(
   "pdfjs-dist/build/pdf.worker.min.mjs",
@@ -134,11 +138,7 @@ export default function SessionSummaryPage() {
   }, [agentic?.history, agentic?.proposal, agenticStatus]);
 
   if (isNotFound) {
-    return (
-      <section className="flex h-full items-center justify-center bg-white text-gray-700">
-        ページが見つかりません。
-      </section>
-    );
+    return <CenteredPageState title="ページが見つかりません。" tone="muted" />;
   }
 
   return (
@@ -146,11 +146,7 @@ export default function SessionSummaryPage() {
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">生成結果</h2>
         {session?.status === "done" ? (
-          <a
-            href={pdfUrl}
-            download="manual.pdf"
-            className="inline-flex items-center rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-          >
+          <a href={pdfUrl} download="manual.pdf" className={buttonClasses()}>
             PDFをダウンロード
           </a>
         ) : null}
@@ -162,7 +158,7 @@ export default function SessionSummaryPage() {
 
       <div className="mt-2 flex flex-col gap-6 lg:flex-row">
         {session?.status === "done" ? (
-          <div className="min-h-[700px] w-full max-w-xl rounded-md border border-gray-200 bg-white">
+          <Card className="min-h-[700px] w-full max-w-xl">
             <div className="flex items-center justify-center overflow-x-auto">
               <Document
                 file={pdfUrl}
@@ -192,36 +188,38 @@ export default function SessionSummaryPage() {
             {pageCount ? (
               <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-2 text-xs text-gray-600">
                 <div className="flex items-center gap-2">
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() =>
                       setPageNumber((prev) => Math.max(1, prev - 1))
                     }
                     disabled={pageNumber <= 1}
-                    className="rounded-md border border-gray-200 px-3 py-1 text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     前へ
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
+                    variant="secondary"
+                    size="sm"
                     onClick={() =>
                       setPageNumber((prev) => Math.min(pageCount, prev + 1))
                     }
                     disabled={pageNumber >= pageCount}
-                    className="rounded-md border border-gray-200 px-3 py-1 text-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     次へ
-                  </button>
+                  </Button>
                 </div>
                 <p>
                   全{pageCount}ページ中 {pageNumber}ページ目を表示しています。
                 </p>
               </div>
             ) : null}
-          </div>
+          </Card>
         ) : null}
 
-        <section className="w-full rounded-md border border-gray-200 bg-white p-5">
+        <Card className="w-full p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="mt-1 text-sm text-gray-600">
@@ -229,16 +227,15 @@ export default function SessionSummaryPage() {
               </p>
             </div>
             {showAgenticStart ? (
-              <button
+              <Button
                 type="button"
                 disabled={session?.status !== "done" || isAgenticBusy}
                 onClick={() => agenticStartMutation.mutate()}
-                className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {agenticStartMutation.isPending
                   ? "実行中..."
                   : "Agent編集を開始"}
-              </button>
+              </Button>
             ) : (
               <div className="text-xs text-gray-500">Agent編集を実行中</div>
             )}
@@ -304,24 +301,23 @@ export default function SessionSummaryPage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap justify-end gap-2">
-                    <button
+                    <Button
                       type="button"
+                      variant="secondary"
                       onClick={() => agenticDecisionMutation.mutate("no")}
                       disabled={isAgenticBusy}
-                      className="rounded-md border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-800 hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {agenticDecisionMutation.isPending
                         ? "送信中..."
                         : "いいえ"}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       type="button"
                       onClick={() => agenticDecisionMutation.mutate("yes")}
                       disabled={isAgenticBusy}
-                      className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       {agenticDecisionMutation.isPending ? "反映中..." : "はい"}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : null}
@@ -356,16 +352,15 @@ export default function SessionSummaryPage() {
                 }}
               >
                 <label className="block">
-                  <textarea
+                  <Textarea
                     value={agenticInput}
                     onChange={(event) => setAgenticInput(event.target.value)}
                     rows={3}
                     placeholder="例: 居住者は50世帯、地下に備蓄倉庫あり"
-                    className="mt-2 w-full rounded-md border border-gray-200 p-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                   />
                 </label>
                 <div className="flex justify-end">
-                  <button
+                  <Button
                     type="submit"
                     disabled={
                       isAgenticBusy ||
@@ -377,17 +372,16 @@ export default function SessionSummaryPage() {
                         "rejected",
                       ].includes(agenticStatus)
                     }
-                    className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {agenticRespondMutation.isPending
                       ? "送信中..."
                       : "メッセージを送信"}
-                  </button>
+                  </Button>
                 </div>
               </form>
             ) : null}
           </div>
-        </section>
+        </Card>
       </div>
     </section>
   );

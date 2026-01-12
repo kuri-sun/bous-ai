@@ -3,6 +3,9 @@ import { useNavigate } from "react-router";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchPlaceAutocomplete, fetchPlaceDetails } from "../../api/places";
 import { createSession } from "../../api/sessions";
+import { Button } from "../../components/ui/Button";
+import { FieldLabel, TextInput } from "../../components/ui/Form";
+import { Modal } from "../../components/ui/Modal";
 import type { PlaceDetail, PlacePrediction } from "../../types/place";
 
 export default function SessionCreatePage() {
@@ -81,22 +84,25 @@ export default function SessionCreatePage() {
 
   return (
     <section className="h-full bg-white text-gray-900">
-      <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-        <div className="w-full max-w-sm rounded-lg bg-white p-6 shadow-lg">
+      <Modal>
+        <div className="space-y-3">
           <h2 className="text-lg font-semibold text-gray-900">
             住所・施設名を検索
           </h2>
-          <p className="mt-2 text-sm text-gray-700">
+          <p className="text-sm text-gray-700">
             候補から選択するとセッションを開始します。
           </p>
-          <div className="mt-5 space-y-3">
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(event) => setSearchInput(event.target.value)}
-              placeholder="例: XXマンション"
-              className="w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
-            />
+          <div className="space-y-3">
+            <div>
+              <FieldLabel htmlFor="place-search">施設名または住所</FieldLabel>
+              <TextInput
+                id="place-search"
+                type="text"
+                value={searchInput}
+                onChange={(event) => setSearchInput(event.target.value)}
+                placeholder="例: XXマンション"
+              />
+            </div>
             {searchError ? (
               <p className="text-sm text-red-600">{searchError}</p>
             ) : null}
@@ -134,13 +140,14 @@ export default function SessionCreatePage() {
               </p>
             ) : null}
             <div className="flex items-center justify-end gap-2">
-              <button
+              <Button
                 type="button"
+                variant="secondary"
+                size="sm"
                 onClick={() => navigate("/")}
-                className="rounded-md border border-gray-200 px-3 py-2 text-sm font-medium text-gray-800 hover:border-gray-300"
               >
                 キャンセル
-              </button>
+              </Button>
               <span className="text-xs text-gray-600">
                 {isFetchingDetail || createMutation.isPending
                   ? "セッション開始中..."
@@ -149,7 +156,7 @@ export default function SessionCreatePage() {
             </div>
           </div>
         </div>
-      </div>
+      </Modal>
     </section>
   );
 }
