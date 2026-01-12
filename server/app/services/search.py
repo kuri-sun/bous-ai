@@ -65,7 +65,10 @@ def _score_item(
 
 
 def _build_query(
-    city: str | None, prefecture: str | None, city_slug: str | None, pref_slug: str | None
+    city: str | None,
+    prefecture: str | None,
+    city_slug: str | None,
+    pref_slug: str | None,
 ) -> list[tuple[str, str]]:
     queries: list[tuple[str, str]] = []
     if city:
@@ -144,9 +147,7 @@ def search_official_manual(
         url = f"{SEARCH_API_URL}?{urllib.parse.urlencode(params)}"
         data = _fetch_json(url)
         if data.get("error"):
-            raise RuntimeError(
-                data["error"].get("message") or "Google search failed"
-            )
+            raise RuntimeError(data["error"].get("message") or "Google search failed")
         raw_items = data.get("items") or []
         if not raw_items:
             continue

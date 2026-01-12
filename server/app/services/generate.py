@@ -1,5 +1,5 @@
 import json
-from typing import Any, Tuple
+from typing import Any
 
 from fastapi import HTTPException
 from langchain_core.messages import HumanMessage
@@ -51,7 +51,7 @@ def _strip_html_to_text(html: str) -> str:
 
 def generate_manual_html(
     answers: dict[str, Any], extracted: dict[str, Any] | None = None
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     llm = get_llm()
     prompt = _build_manual_prompt(answers, extracted)
     response = llm.invoke([HumanMessage(content=prompt)])
