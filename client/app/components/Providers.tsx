@@ -6,6 +6,7 @@ import {
   useIsMutating,
 } from "@tanstack/react-query";
 import LoadingIndicator from "./LoadingIndicator";
+import { Modal } from "./ui/Modal";
 
 type ProvidersProps = {
   children: React.ReactNode;
@@ -30,11 +31,12 @@ function GlobalLoadingOverlay({ children }: ProvidersProps) {
     <>
       {children}
       {isBusy ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="rounded-md bg-white px-6 py-4 shadow-lg">
-            <LoadingIndicator size="sm" label="処理中..." />
-          </div>
-        </div>
+        <Modal
+          className="z-50"
+          containerClassName="rounded-md bg-white px-6 py-4 shadow-lg"
+        >
+          <LoadingIndicator size="sm" label="処理中..." />
+        </Modal>
       ) : null}
     </>
   );

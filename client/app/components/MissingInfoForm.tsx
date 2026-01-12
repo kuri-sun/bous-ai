@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
+import { Button } from "./ui/Button";
+import { FieldLabel, Select, Textarea, TextInput } from "./ui/Form";
 
 type GenerateResponse = {
   session?: {
@@ -100,12 +102,9 @@ export function MissingInfoForm({
         <div className="space-y-5">
           {analyzeResult.form.fields.map((field) => (
             <label key={field.id} className="block">
-              <span className="text-sm font-medium text-gray-800">
-                {field.label}
-                {field.required ? " *" : ""}
-              </span>
+              <FieldLabel required={field.required}>{field.label}</FieldLabel>
               {field.field_type === "textarea" ? (
-                <textarea
+                <Textarea
                   value={answers[field.id] ?? ""}
                   placeholder={field.placeholder}
                   rows={4}
@@ -115,10 +114,9 @@ export function MissingInfoForm({
                       [field.id]: event.target.value,
                     }))
                   }
-                  className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 />
               ) : field.field_type === "select" ? (
-                <select
+                <Select
                   value={answers[field.id] ?? ""}
                   onChange={(event) =>
                     setAnswers((prev) => ({
@@ -126,7 +124,6 @@ export function MissingInfoForm({
                       [field.id]: event.target.value,
                     }))
                   }
-                  className="mt-2 w-full rounded-md border border-gray-200 bg-white p-2 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 >
                   <option value="">選択してください</option>
                   {field.options?.map((option) => (
@@ -134,9 +131,9 @@ export function MissingInfoForm({
                       {option}
                     </option>
                   ))}
-                </select>
+                </Select>
               ) : (
-                <input
+                <TextInput
                   type="text"
                   value={answers[field.id] ?? ""}
                   placeholder={field.placeholder}
@@ -146,7 +143,6 @@ export function MissingInfoForm({
                       [field.id]: event.target.value,
                     }))
                   }
-                  className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
                 />
               )}
             </label>
@@ -158,13 +154,9 @@ export function MissingInfoForm({
         </p>
       )}
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <button
-          type="submit"
-          disabled={!analyzeResult || isGenerating}
-          className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" disabled={!analyzeResult || isGenerating}>
           {isGenerating ? "PDF生成中..." : "PDFを作成"}
-        </button>
+        </Button>
       </div>
       {error ? <p className="text-sm text-red-600">{error}</p> : null}
     </form>

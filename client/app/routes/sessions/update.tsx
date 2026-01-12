@@ -5,6 +5,8 @@ import {
   InputAnalyzeForm,
   type InputAnalyzeFormHandle,
 } from "../../components/InputAnalyzeForm";
+import { Button } from "../../components/ui/Button";
+import { CenteredPageState } from "../../components/ui/CenteredPageState";
 import type { AnalyzeResponse } from "../../types/manual";
 import { API_BASE, SAMPLE_MEMO } from "../../constants";
 import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
@@ -83,25 +85,21 @@ export default function SessionDetailPage() {
   };
 
   if (sessionError instanceof NotFoundError || !sessionId) {
-    return (
-      <section className="flex h-full items-center justify-center bg-white text-gray-700">
-        ページが見つかりません。
-      </section>
-    );
+    return <CenteredPageState title="ページが見つかりません。" tone="muted" />;
   }
 
   if (isLoading && !sessionDetail) {
-    return (
-      <section className="flex h-full items-center justify-center bg-white text-gray-700" />
-    );
+    return <CenteredPageState title="読み込み中..." tone="muted" />;
   }
 
   return (
     <section className="bg-white p-8 text-gray-900">
       <header className="mb-6 flex items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">メモとPDF/画像ファイル入力</h2>
-        <button
+        <Button
           type="button"
+          variant="secondary"
+          size="sm"
           onClick={async () => {
             if (!analyzeFormRef.current) {
               return;
@@ -111,10 +109,9 @@ export default function SessionDetailPage() {
             setIsFillingSample(false);
           }}
           disabled={isFillingSample}
-          className="rounded-md border border-gray-200 px-3 py-1 text-xs font-medium text-gray-800 hover:border-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isFillingSample ? "入力中..." : "サンプルを入力"}
-        </button>
+        </Button>
       </header>
 
       <InputAnalyzeForm

@@ -1,4 +1,5 @@
 import { Link } from "react-router";
+import { buttonClasses } from "../components/ui/Button";
 
 export default function Home() {
   return (
@@ -9,10 +10,7 @@ export default function Home() {
           メモ・議事録や見本PDFから、防災マニュアルPDFを作成します。
         </p>
         <div className="mt-6 flex justify-center">
-          <Link
-            to="/sessions/create"
-            className="rounded-md bg-gray-900 px-5 py-2 text-sm font-semibold text-white hover:bg-gray-800"
-          >
+          <Link to="/sessions/create" className={buttonClasses({ size: "lg" })}>
             新規作成を始める
           </Link>
         </div>

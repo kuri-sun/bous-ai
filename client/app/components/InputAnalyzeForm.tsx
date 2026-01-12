@@ -1,7 +1,9 @@
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
+import { Button } from "./ui/Button";
+import { FieldLabel, Textarea } from "./ui/Form";
 
 type InputAnalyzeFormProps = {
   sampleMemo: string;
@@ -100,7 +102,7 @@ export const InputAnalyzeForm = forwardRef<
       analyzeMutation.mutate(formData);
     };
 
-    const loadSampleFile = async () => {
+    const loadSampleFile = useCallback(async () => {
       if (!sampleFileUrl) {
         return;
       }
@@ -121,7 +123,7 @@ export const InputAnalyzeForm = forwardRef<
           err instanceof Error ? err.message : "予期しないエラーです。";
         setError(message);
       }
-    };
+    }, [sampleFileUrl]);
 
     useImperativeHandle(
       ref,
@@ -132,25 +134,23 @@ export const InputAnalyzeForm = forwardRef<
           await loadSampleFile();
         },
       }),
-      [sampleMemo, sampleFileUrl],
+      [sampleMemo, loadSampleFile],
     );
 
     return (
       <form className="space-y-5" onSubmit={handleAnalyze}>
         <label className="block">
-          <span className="text-sm font-medium text-gray-800">メモ</span>
-          <textarea
+          <FieldLabel htmlFor="text-input">メモ</FieldLabel>
+          <Textarea
+            id="text-input"
             value={textInput}
             onChange={(event) => setTextInput(event.target.value)}
             placeholder="例: 2024年1月 防災会議で決定した避難場所や連絡体制..."
             rows={5}
-            className="mt-2 w-full rounded-md border border-gray-200 p-3 text-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
           />
         </label>
         <label className="block">
-          <span className="text-sm font-medium text-gray-800">
-            PDF/画像ファイル
-          </span>
+          <FieldLabel htmlFor="sample-file">PDF/画像ファイル</FieldLabel>
           <div className="mt-2 flex flex-wrap items-center gap-3">
             <input
               id="sample-file"
@@ -177,17 +177,13 @@ export const InputAnalyzeForm = forwardRef<
         </label>
         <div className="flex items-center justify-between gap-3">
           {error ? <p className="text-sm text-red-600">{error}</p> : <span />}
-          <button
-            type="submit"
-            disabled={isAnalyzing || isBusy}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button type="submit" disabled={isAnalyzing || isBusy}>
             {isAnalyzing
               ? submitLoadingLabel
               : isBusy
                 ? busyLabel
                 : submitLabel}
-          </button>
+          </Button>
         </div>
       </form>
     );

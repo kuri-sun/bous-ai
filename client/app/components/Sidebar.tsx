@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { SessionSummary } from "../api/sessions";
+import { Button } from "./ui/Button";
 
 type SidebarProps = {
   sessions: SessionSummary[];
@@ -22,13 +23,13 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
   return (
     <aside className="h-full overflow-y-auto border-r border-gray-200">
       <div className="px-3 py-3">
-        <button
+        <Button
           type="button"
+          fullWidth
           onClick={() => navigate("/sessions/create")}
-          className="w-full rounded-md bg-gray-900 px-3 py-2 text-left text-sm font-semibold text-white hover:bg-gray-800"
         >
           防災マニュアルを作成
-        </button>
+        </Button>
       </div>
       {isLoading || sessions.length === 0 ? (
         <p className="px-3 py-2 text-xs text-gray-700">
