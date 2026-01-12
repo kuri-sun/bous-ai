@@ -17,6 +17,7 @@
     "isbot": "^5.1.31",
     "react": "^19.2.3",
     "react-dom": "^19.2.3",
+    "react-hook-form": "^7.71.0",
     "react-pdf": "^10.3.0",
     "react-router": "7.10.1"
   },

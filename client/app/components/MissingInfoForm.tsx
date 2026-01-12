@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router";
 import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
@@ -38,15 +39,25 @@ export function MissingInfoForm({
   initialAnswers,
 }: MissingInfoFormProps) {
   const navigate = useNavigate();
-  const [answers, setAnswers] = useState<Record<string, string>>(() =>
-    buildInitialAnswers(analyzeResult, initialAnswers),
-  );
-  const [error, setError] = useState("");
-  const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    clearErrors,
+    formState: { errors, isSubmitting },
+  } = useForm<Record<string, string>>({
+    defaultValues: buildInitialAnswers(analyzeResult, initialAnswers),
+  });
+
+  useEffect(() => {
+    reset(buildInitialAnswers(analyzeResult, initialAnswers));
+    clearErrors();
+  }, [analyzeResult, initialAnswers, reset, clearErrors]);
 
   const generateMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (answers: Record<string, string>) => {
       const response = await fetch(`${API_BASE}/api/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -74,27 +85,25 @@ export function MissingInfoForm({
     onError: (err) => {
       const message =
         err instanceof Error ? err.message : "予期しないエラーです。";
-      setError(message);
-    },
-    onSettled: () => {
-      setIsGenerating(false);
+      setError("root", { type: "server", message });
     },
   });
 
-  const handleGenerate = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!analyzeResult || isGenerating) {
+  const handleGenerate = handleSubmit((formValues) => {
+    if (!analyzeResult) {
       return;
     }
     if (!analyzeResult?.session_id) {
-      setError("セッションIDが取得できません。");
+      setError("root", {
+        type: "manual",
+        message: "セッションIDが取得できません。",
+      });
       return;
     }
 
-    setIsGenerating(true);
-    setError("");
-    generateMutation.mutate();
-  };
+    clearErrors("root");
+    generateMutation.mutate(formValues);
+  });
 
   return (
     <form className="space-y-6" onSubmit={handleGenerate}>
@@ -105,25 +114,17 @@ export function MissingInfoForm({
               <FieldLabel required={field.required}>{field.label}</FieldLabel>
               {field.field_type === "textarea" ? (
                 <Textarea
-                  value={answers[field.id] ?? ""}
+                  {...register(field.id, {
+                    required: field.required ? "必須項目です" : false,
+                  })}
                   placeholder={field.placeholder}
                   rows={4}
-                  onChange={(event) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [field.id]: event.target.value,
-                    }))
-                  }
                 />
               ) : field.field_type === "select" ? (
                 <Select
-                  value={answers[field.id] ?? ""}
-                  onChange={(event) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [field.id]: event.target.value,
-                    }))
-                  }
+                  {...register(field.id, {
+                    required: field.required ? "必須項目です" : false,
+                  })}
                 >
                   <option value="">選択してください</option>
                   {field.options?.map((option) => (
@@ -135,16 +136,17 @@ export function MissingInfoForm({
               ) : (
                 <TextInput
                   type="text"
-                  value={answers[field.id] ?? ""}
+                  {...register(field.id, {
+                    required: field.required ? "必須項目です" : false,
+                  })}
                   placeholder={field.placeholder}
-                  onChange={(event) =>
-                    setAnswers((prev) => ({
-                      ...prev,
-                      [field.id]: event.target.value,
-                    }))
-                  }
                 />
               )}
+              {errors[field.id]?.message ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {errors[field.id]?.message as string}
+                </p>
+              ) : null}
             </label>
           ))}
         </div>
@@ -154,11 +156,18 @@ export function MissingInfoForm({
         </p>
       )}
       <div className="flex flex-wrap items-center justify-end gap-3">
-        <Button type="submit" disabled={!analyzeResult || isGenerating}>
-          {isGenerating ? "PDF生成中..." : "PDFを作成"}
+        <Button
+          type="submit"
+          disabled={
+            !analyzeResult || isSubmitting || generateMutation.isPending
+          }
+        >
+          {generateMutation.isPending ? "PDF生成中..." : "PDFを作成"}
         </Button>
       </div>
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
+      {errors.root?.message ? (
+        <p className="text-sm text-red-600">{errors.root.message as string}</p>
+      ) : null}
     </form>
   );
 }
