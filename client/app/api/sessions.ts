@@ -1,5 +1,5 @@
 import { API_BASE } from "../constants";
-import type { FormSchema } from "../types/manual";
+import type { AgenticState } from "../types/agentic";
 import type { PlaceDetail } from "../types/place";
 
 type SessionDetail = {
@@ -7,8 +7,7 @@ type SessionDetail = {
   place?: PlaceDetail | null;
   status?: string | null;
   inputs?: Record<string, unknown> | null;
-  form?: FormSchema | null;
-  msg?: string | null;
+  agentic?: AgenticState | null;
 };
 
 type SessionDetailResponse = {

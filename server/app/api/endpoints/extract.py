@@ -82,8 +82,6 @@ async def analyze(
         {
             "status": "step2",
             "inputs": {"step1_extracted": extracted},
-            "form": response.form.model_dump(),
-            "msg": response.msg,
         },
     )
     return AnalyzeResponse(

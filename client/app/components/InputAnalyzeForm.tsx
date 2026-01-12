@@ -5,13 +5,18 @@ import { API_BASE } from "../constants";
 
 type InputAnalyzeFormProps = {
   sampleMemo: string;
+  sampleFileUrl?: string;
   defaultTextInput?: string;
   sessionId?: string | null;
   onAnalyzed: (result: AnalyzeResponse) => void;
+  submitLabel?: string;
+  submitLoadingLabel?: string;
+  isBusy?: boolean;
+  busyLabel?: string;
 };
 
 export type InputAnalyzeFormHandle = {
-  fillSample: () => void;
+  fillSample: () => Promise<void>;
 };
 
 export const InputAnalyzeForm = forwardRef<
@@ -19,7 +24,17 @@ export const InputAnalyzeForm = forwardRef<
   InputAnalyzeFormProps
 >(
   (
-    { sampleMemo, defaultTextInput = "", sessionId = null, onAnalyzed },
+    {
+      sampleMemo,
+      sampleFileUrl,
+      defaultTextInput = "",
+      sessionId = null,
+      onAnalyzed,
+      submitLabel = "不足情報を抽出",
+      submitLoadingLabel = "解析中...",
+      isBusy = false,
+      busyLabel = "処理中...",
+    },
     ref,
   ) => {
     const [textInput, setTextInput] = useState(defaultTextInput);
@@ -85,12 +100,39 @@ export const InputAnalyzeForm = forwardRef<
       analyzeMutation.mutate(formData);
     };
 
+    const loadSampleFile = async () => {
+      if (!sampleFileUrl) {
+        return;
+      }
+      try {
+        const response = await fetch(sampleFileUrl);
+        if (!response.ok) {
+          throw new Error("サンプルPDFの取得に失敗しました。");
+        }
+        const blob = await response.blob();
+        const filename =
+          sampleFileUrl.split("/").pop() || "sample-document.pdf";
+        const newFile = new File([blob], filename, {
+          type: blob.type || "application/pdf",
+        });
+        setFile(newFile);
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "予期しないエラーです。";
+        setError(message);
+      }
+    };
+
     useImperativeHandle(
       ref,
       () => ({
-        fillSample: () => setTextInput(sampleMemo),
+        fillSample: async () => {
+          setTextInput(sampleMemo);
+          setError("");
+          await loadSampleFile();
+        },
       }),
-      [sampleMemo],
+      [sampleMemo, sampleFileUrl],
     );
 
     return (
@@ -137,10 +179,14 @@ export const InputAnalyzeForm = forwardRef<
           {error ? <p className="text-sm text-red-600">{error}</p> : <span />}
           <button
             type="submit"
-            disabled={isAnalyzing}
+            disabled={isAnalyzing || isBusy}
             className="rounded-md bg-gray-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {isAnalyzing ? "解析中..." : "不足情報を抽出"}
+            {isAnalyzing
+              ? submitLoadingLabel
+              : isBusy
+                ? busyLabel
+                : submitLabel}
           </button>
         </div>
       </form>
