@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
 import { useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import {
   decideAgenticProposal,
   respondAgenticConversation,
@@ -27,9 +28,15 @@ export default function SessionSummaryPage() {
   const [pageNumber, setPageNumber] = useState(1);
   const [agentic, setAgentic] = useState<AgenticState | null>(null);
   const [agenticError, setAgenticError] = useState("");
-  const [agenticInput, setAgenticInput] = useState("");
   const [pdfVersion, setPdfVersion] = useState(0);
   const queryClient = useQueryClient();
+  const {
+    register,
+    handleSubmit,
+    reset: resetAgenticInput,
+    watch,
+  } = useForm<{ message: string }>({ defaultValues: { message: "" } });
+  const agenticInput = watch("message");
   const pdfUrl = useMemo(() => {
     if (!sessionId) {
       return "";
@@ -62,7 +69,7 @@ export default function SessionSummaryPage() {
     onSuccess: (data) => {
       setAgentic(data.agentic);
       setAgenticError("");
-      setAgenticInput("");
+      resetAgenticInput({ message: "" });
     },
     onError: (err) => {
       const message =
@@ -81,7 +88,7 @@ export default function SessionSummaryPage() {
     onSuccess: (data) => {
       setAgentic(data.agentic);
       setAgenticError("");
-      setAgenticInput("");
+      resetAgenticInput({ message: "" });
     },
     onError: (err) => {
       const message =
@@ -136,6 +143,21 @@ export default function SessionSummaryPage() {
     }
     return agentic.history;
   }, [agentic?.history, agentic?.proposal, agenticStatus]);
+
+  const handleAgenticSubmit = handleSubmit(({ message }) => {
+    const trimmed = message.trim();
+    if (!trimmed) {
+      return;
+    }
+    if (
+      agenticStatus === "question" ||
+      agenticStatus === "proposal" ||
+      agenticStatus === "accepted" ||
+      agenticStatus === "rejected"
+    ) {
+      agenticRespondMutation.mutate(trimmed);
+    }
+  });
 
   if (isNotFound) {
     return <CenteredPageState title="ページが見つかりません。" tone="muted" />;
@@ -334,27 +356,10 @@ export default function SessionSummaryPage() {
             </div>
 
             {!showInitialLoading && agentic && !showAgenticStart ? (
-              <form
-                className="space-y-3"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  if (!agenticInput.trim()) {
-                    return;
-                  }
-                  if (
-                    agenticStatus === "question" ||
-                    agenticStatus === "proposal" ||
-                    agenticStatus === "accepted" ||
-                    agenticStatus === "rejected"
-                  ) {
-                    agenticRespondMutation.mutate(agenticInput.trim());
-                  }
-                }}
-              >
+              <form className="space-y-3" onSubmit={handleAgenticSubmit}>
                 <label className="block">
                   <Textarea
-                    value={agenticInput}
-                    onChange={(event) => setAgenticInput(event.target.value)}
+                    {...register("message")}
                     rows={3}
                     placeholder="例: 居住者は50世帯、地下に備蓄倉庫あり"
                   />

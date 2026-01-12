@@ -1,5 +1,6 @@
-import { forwardRef, useCallback, useImperativeHandle, useState } from "react";
+import { forwardRef, useCallback, useEffect, useImperativeHandle } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
 import type { AnalyzeResponse } from "../types/manual";
 import { API_BASE } from "../constants";
 import { Button } from "./ui/Button";
@@ -21,6 +22,11 @@ export type InputAnalyzeFormHandle = {
   fillSample: () => Promise<void>;
 };
 
+type FormValues = {
+  textInput: string;
+  file: File | null;
+};
+
 export const InputAnalyzeForm = forwardRef<
   InputAnalyzeFormHandle,
   InputAnalyzeFormProps
@@ -39,11 +45,20 @@ export const InputAnalyzeForm = forwardRef<
     },
     ref,
   ) => {
-    const [textInput, setTextInput] = useState(defaultTextInput);
-    const [file, setFile] = useState<File | null>(null);
-    const [error, setError] = useState("");
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
     const queryClient = useQueryClient();
+    const {
+      register,
+      handleSubmit,
+      setValue,
+      reset,
+      clearErrors,
+      setError,
+      watch,
+      formState: { errors, isSubmitting },
+    } = useForm<FormValues>({
+      defaultValues: { textInput: defaultTextInput, file: null },
+    });
+    const file = watch("file");
 
     const analyzeMutation = useMutation({
       mutationFn: async (formData: FormData) => {
@@ -66,41 +81,33 @@ export const InputAnalyzeForm = forwardRef<
       onError: (err) => {
         const message =
           err instanceof Error ? err.message : "予期しないエラーです。";
-        setError(message);
-      },
-      onSettled: () => {
-        setIsAnalyzing(false);
+        setError("root", { type: "server", message });
       },
     });
 
-    const handleAnalyze = (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      if (isAnalyzing) {
+    const handleAnalyze = handleSubmit((values) => {
+      if (!values.textInput.trim() && !values.file) {
+        setError("root", {
+          type: "manual",
+          message: "テキストまたはファイルを入力してください。",
+        });
         return;
       }
-
-      if (!textInput.trim() && !file) {
-        setError("テキストまたはファイルを入力してください。");
-        return;
-      }
-
-      setIsAnalyzing(true);
-      setError("");
 
       const formData = new FormData();
       formData.append("source_type", "mixed");
-      if (textInput.trim()) {
-        formData.append("text", textInput.trim());
+      if (values.textInput.trim()) {
+        formData.append("text", values.textInput.trim());
       }
-      if (file) {
-        formData.append("file", file);
+      if (values.file) {
+        formData.append("file", values.file);
       }
       if (sessionId) {
         formData.append("session_id", sessionId);
       }
 
       analyzeMutation.mutate(formData);
-    };
+    });
 
     const loadSampleFile = useCallback(async () => {
       if (!sampleFileUrl) {
@@ -117,25 +124,31 @@ export const InputAnalyzeForm = forwardRef<
         const newFile = new File([blob], filename, {
           type: blob.type || "application/pdf",
         });
-        setFile(newFile);
+        setValue("file", newFile, { shouldValidate: true });
+        clearErrors("root");
       } catch (err) {
         const message =
           err instanceof Error ? err.message : "予期しないエラーです。";
-        setError(message);
+        setError("root", { type: "server", message });
       }
-    }, [sampleFileUrl]);
+    }, [sampleFileUrl, clearErrors, setError, setValue]);
 
     useImperativeHandle(
       ref,
       () => ({
         fillSample: async () => {
-          setTextInput(sampleMemo);
-          setError("");
+          reset({ textInput: sampleMemo, file: null });
+          clearErrors("root");
           await loadSampleFile();
         },
       }),
-      [sampleMemo, loadSampleFile],
+      [sampleMemo, loadSampleFile, reset, clearErrors],
     );
+
+    useEffect(() => {
+      reset({ textInput: defaultTextInput, file: null });
+      clearErrors("root");
+    }, [defaultTextInput, reset, clearErrors]);
 
     return (
       <form className="space-y-5" onSubmit={handleAnalyze}>
@@ -143,8 +156,7 @@ export const InputAnalyzeForm = forwardRef<
           <FieldLabel htmlFor="text-input">メモ</FieldLabel>
           <Textarea
             id="text-input"
-            value={textInput}
-            onChange={(event) => setTextInput(event.target.value)}
+            {...register("textInput")}
             placeholder="例: 2024年1月 防災会議で決定した避難場所や連絡体制..."
             rows={5}
           />
@@ -156,7 +168,12 @@ export const InputAnalyzeForm = forwardRef<
               id="sample-file"
               type="file"
               accept=".pdf,image/*"
-              onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              {...register("file")}
+              onChange={(event) => {
+                const newFile = event.target.files?.[0] ?? null;
+                setValue("file", newFile, { shouldValidate: true });
+                clearErrors("root");
+              }}
               className="hidden"
             />
             <label
@@ -176,9 +193,13 @@ export const InputAnalyzeForm = forwardRef<
           ) : null}
         </label>
         <div className="flex items-center justify-between gap-3">
-          {error ? <p className="text-sm text-red-600">{error}</p> : <span />}
-          <Button type="submit" disabled={isAnalyzing || isBusy}>
-            {isAnalyzing
+          {errors.root?.message ? (
+            <p className="text-sm text-red-600">{errors.root.message}</p>
+          ) : (
+            <span />
+          )}
+          <Button type="submit" disabled={isSubmitting || isBusy}>
+            {isSubmitting
               ? submitLoadingLabel
               : isBusy
                 ? busyLabel
