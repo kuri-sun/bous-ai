@@ -2,6 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from app.schemas.agentic import AgenticState
 from app.schemas.place import PlaceDetail
 
 
@@ -25,8 +26,7 @@ class SessionDetail(BaseModel):
     created_at: str | None = None
     updated_at: str | None = None
     inputs: dict[str, Any] | None = None
-    form: dict[str, Any] | None = None
-    msg: str | None = None
+    agentic: AgenticState | None = None
 
 
 class SessionCreateRequest(BaseModel):

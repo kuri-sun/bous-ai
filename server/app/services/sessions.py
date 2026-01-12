@@ -75,8 +75,7 @@ def get_session(session_id: str) -> dict[str, Any] | None:
         "created_at": created_at,
         "updated_at": updated_at,
         "inputs": payload.get("inputs"),
-        "form": payload.get("form"),
-        "msg": payload.get("msg"),
+        "agentic": payload.get("agentic"),
     }
 
 

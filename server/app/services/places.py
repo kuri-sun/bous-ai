@@ -18,15 +18,15 @@ def autocomplete_places(
     input_text: str, country: str = "jp", language: str = "ja"
 ) -> list[dict[str, Any]]:
     settings = get_settings()
-    if not settings.google_maps_api_key:
-        raise RuntimeError("GOOGLE_MAPS_API_KEY is not set")
+    if not settings.google_api_key:
+        raise RuntimeError("GOOGLE_API_KEY is not set")
 
     params = {
         "input": input_text,
         "language": language,
         "components": f"country:{country}",
         "types": "geocode",
-        "key": settings.google_maps_api_key,
+        "key": settings.google_api_key,
     }
     url = f"{PLACES_API_BASE}/autocomplete/json?{urllib.parse.urlencode(params)}"
     data = _fetch_json(url)
@@ -61,8 +61,8 @@ def _extract_component(
 
 def get_place_details(place_id: str, language: str = "ja") -> dict[str, Any]:
     settings = get_settings()
-    if not settings.google_maps_api_key:
-        raise RuntimeError("GOOGLE_MAPS_API_KEY is not set")
+    if not settings.google_api_key:
+        raise RuntimeError("GOOGLE_API_KEY is not set")
 
     fields = ",".join(
         [
@@ -78,7 +78,7 @@ def get_place_details(place_id: str, language: str = "ja") -> dict[str, Any]:
         "place_id": place_id,
         "language": language,
         "fields": fields,
-        "key": settings.google_maps_api_key,
+        "key": settings.google_api_key,
     }
     url = f"{PLACES_API_BASE}/details/json?{urllib.parse.urlencode(params)}"
     data = _fetch_json(url)

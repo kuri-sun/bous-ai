@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/generate", response_model=GenerateResponse)
 async def generate(request: GenerateRequest) -> GenerateResponse:
-    html = generate_manual_html(request.answers, request.extracted)
+    html, plain_text = generate_manual_html(request.answers, request.extracted)
     pdf_bytes = await generate_manual_pdf(html)
     session_payload = None
     if request.session_id:
@@ -24,7 +24,11 @@ async def generate(request: GenerateRequest) -> GenerateResponse:
             {
                 "status": "done",
                 "pdf_blob_name": blob_name,
-                "inputs": {"step2": request.answers},
+                "inputs": {
+                    "step2": request.answers,
+                    "step2_html": html,
+                    "step2_plain_text": plain_text,
+                },
             },
         )
         session_payload = get_session(request.session_id)

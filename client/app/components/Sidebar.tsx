@@ -1,7 +1,6 @@
 import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router";
 import type { SessionSummary } from "../api/sessions";
-import LoadingIndicator from "./LoadingIndicator";
 
 type SidebarProps = {
   sessions: SessionSummary[];
@@ -28,14 +27,10 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
           onClick={() => navigate("/sessions/create")}
           className="w-full rounded-md bg-gray-900 px-3 py-2 text-left text-sm font-semibold text-white hover:bg-gray-800"
         >
-          マニュアルを作成
+          防災マニュアルを作成
         </button>
       </div>
-      {isLoading ? (
-        <div className="px-3 py-2">
-          <LoadingIndicator size="sm" label="読み込み中" />
-        </div>
-      ) : sessions.length === 0 ? (
+      {isLoading || sessions.length === 0 ? (
         <p className="px-3 py-2 text-xs text-gray-700">
           セッションがまだありません。
         </p>
