@@ -141,7 +141,7 @@ async def agentic_decision(
     answers["agentic_proposal"] = proposal.strip()
     extracted = inputs.get("step1_extracted") or {}
 
-    html = generate_manual_html(answers, extracted)
+    html, plain_text = generate_manual_html(answers, extracted)
     pdf_bytes = await generate_manual_pdf(html)
 
     settings = get_settings()
@@ -162,7 +162,13 @@ async def agentic_decision(
         {
             "status": "done",
             "pdf_blob_name": blob_name,
-            "inputs": {**inputs, "agentic": {"proposal": proposal}},
+            "inputs": {
+                **inputs,
+                "step2": answers,
+                "step2_html": html,
+                "step2_plain_text": plain_text,
+                "agentic": {"proposal": proposal},
+            },
             "agentic": agentic_state,
         },
     )
