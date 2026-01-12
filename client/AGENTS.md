@@ -27,7 +27,3 @@
 ## チェック/フォーマット
 - `npm run lint`（ESLint）
 - Prettier が入っている場合は `npm run format` などを追加するとよい（現状は lint/build を想定）。
-
-## PR の目安
-- タイトル例: `[client] ...`。横断なら `[repo] ...`。
-- コミット前に `npm run lint` と `npm run build` を実行し、余分な変更や秘密情報がないことを確認。
