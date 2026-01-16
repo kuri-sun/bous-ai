@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes } from "react";
 
-type ButtonVariant = "primary" | "secondary";
+type ButtonVariant = "primary" | "secondary" | "danger";
 type ButtonSize = "sm" | "md" | "lg";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -20,6 +20,7 @@ const variantClassMap: Record<ButtonVariant, string> = {
   primary: "bg-gray-900 text-white hover:bg-gray-800",
   secondary:
     "border border-gray-200 bg-white text-gray-800 hover:border-gray-300",
+  danger: "bg-red-600 text-white hover:bg-red-500",
 };
 
 const sizeClassMap: Record<ButtonSize, string> = {

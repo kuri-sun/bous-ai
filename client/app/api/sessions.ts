@@ -64,6 +64,16 @@ export const createSession = async (
   return (await response.json()) as SessionDetailResponse;
 };
 
+export const deleteSession = async (id: string) => {
+  const response = await fetch(`${API_BASE}/api/sessions/${id}`, {
+    method: "DELETE",
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "セッションの削除に失敗しました。");
+  }
+};
+
 export type {
   SessionDetail,
   SessionDetailResponse,
