@@ -170,8 +170,17 @@ async def agentic_decision(
     if not uploaded_images and raw_images:
         raise HTTPException(status_code=400, detail="Step2 images are invalid")
 
+    inputs = session.get("inputs") or {}
+    step1 = inputs.get("step1") or {}
+    manual_title = step1.get("manual_title") if isinstance(step1, dict) else None
+    manual_title = (
+        manual_title.strip()
+        if isinstance(manual_title, str) and manual_title.strip()
+        else "防災マニュアル"
+    )
+
     markdown, illustration_prompts = generate_markdown_with_prompts(
-        memo, uploaded_images, proposal.strip()
+        memo, uploaded_images, manual_title, proposal.strip()
     )
 
     settings = get_settings()
@@ -225,6 +234,7 @@ async def agentic_decision(
                 **inputs,
                 "step2": {
                     "memo": memo,
+                    "manual_title": manual_title,
                     "uploaded_images": uploaded_images,
                     "illustration_prompts": illustration_prompts,
                     "illustration_images": illustration_images,
