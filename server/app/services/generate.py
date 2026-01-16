@@ -48,10 +48,12 @@ def _parse_json_response(text: str) -> dict[str, Any] | None:
 def _build_markdown_prompt(
     memo: str,
     input_images: list[InputImage],
+    manual_title: str,
     agentic_proposal: str | None = None,
 ) -> str:
     instructions = (
         "あなたは日本語の防災マニュアルを作成するアシスタントです。"
+        "manual_titleがある場合は、必ずそのタイトルを見出しとして使用してください。"
         "メモと画像情報を参考に、PDF化に適したMarkdownを作成してください。"
         "入力画像は指定されたURLと説明を使ってMarkdownに差し込みます。"
         "input_imagesのpublic_urlはそれぞれ1回だけ使い、"
@@ -74,6 +76,7 @@ def _build_markdown_prompt(
         "余計な説明やコードフェンスは不要です。\n\n"
     )
     payload = {
+        "manual_title": manual_title,
         "memo": memo,
         "input_images": input_images,
         "agentic_proposal": agentic_proposal,
@@ -166,10 +169,16 @@ def _ensure_input_images_in_markdown(
 def generate_markdown_with_prompts(
     memo: str,
     input_images: list[InputImage],
+    manual_title: str,
     agentic_proposal: str | None = None,
 ) -> tuple[str, list[IllustrationPrompt]]:
     llm = get_llm()
-    prompt = _build_markdown_prompt(memo, input_images, agentic_proposal)
+    prompt = _build_markdown_prompt(
+        memo,
+        input_images,
+        manual_title,
+        agentic_proposal,
+    )
     response = llm.invoke([HumanMessage(content=prompt)])
     payload = _parse_json_response(response.content or "")
     if not payload:

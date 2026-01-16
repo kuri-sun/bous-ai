@@ -79,8 +79,17 @@ async def generate(
             }
         )
 
+    inputs = session.get("inputs") or {}
+    step1 = inputs.get("step1") or {}
+    manual_title = step1.get("manual_title") if isinstance(step1, dict) else None
+    manual_title = (
+        manual_title.strip()
+        if isinstance(manual_title, str) and manual_title.strip()
+        else "防災マニュアル"
+    )
+
     markdown, illustration_prompts = generate_markdown_with_prompts(
-        memo, uploaded_images
+        memo, uploaded_images, manual_title
     )
 
     illustration_images: list[IllustrationImage] = []
@@ -119,6 +128,7 @@ async def generate(
             "inputs": {
                 "step2": {
                     "memo": memo,
+                    "manual_title": manual_title,
                     "uploaded_images": uploaded_images,
                     "illustration_prompts": illustration_prompts,
                     "illustration_images": illustration_images,

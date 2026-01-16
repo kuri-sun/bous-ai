@@ -9,25 +9,37 @@ import { FieldLabel, TextInput } from "../../components/ui/Form";
 import { Modal } from "../../components/ui/Modal";
 import type { PlaceDetail, PlacePrediction } from "../../types/place";
 
+const getPredictionLabel = (prediction: PlacePrediction | null) =>
+  prediction?.description ??
+  prediction?.main_text ??
+  prediction?.secondary_text ??
+  "";
+
 export default function SessionCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const {
     register,
+    handleSubmit,
     watch,
     setError,
     clearErrors,
+    setValue,
     formState: { errors },
-  } = useForm<{ search: string }>({
-    defaultValues: { search: "" },
+  } = useForm<{ search: string; manualTitle: string }>({
+    defaultValues: { search: "", manualTitle: "" },
   });
   const searchInput = watch("search") ?? "";
+  const manualTitle = watch("manualTitle") ?? "";
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
+  const [selectedPrediction, setSelectedPrediction] =
+    useState<PlacePrediction | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
   const createMutation = useMutation({
-    mutationFn: (place: PlaceDetail) => createSession(place),
+    mutationFn: (place: PlaceDetail) =>
+      createSession(place, manualTitle.trim()),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
       clearErrors("root");
@@ -42,6 +54,15 @@ export default function SessionCreatePage() {
   });
 
   useEffect(() => {
+    const selectedLabel = getPredictionLabel(selectedPrediction);
+    if (selectedPrediction && searchInput.trim() === selectedLabel.trim()) {
+      setPredictions([]);
+      setIsSearching(false);
+      return;
+    }
+    if (selectedPrediction) {
+      setSelectedPrediction(null);
+    }
     const trimmed = searchInput.trim();
     if (!trimmed) {
       setPredictions([]);
@@ -73,13 +94,20 @@ export default function SessionCreatePage() {
       clearTimeout(timer);
       controller.abort();
     };
-  }, [searchInput, clearErrors, setError]);
+  }, [searchInput, selectedPrediction, clearErrors, setError]);
 
-  const handleSelect = async (prediction: PlacePrediction) => {
+  const handleSubmitForm = handleSubmit(async () => {
+    if (!selectedPrediction) {
+      setError("root", {
+        type: "manual",
+        message: "候補から住所を選択してください。",
+      });
+      return;
+    }
     setIsFetchingDetail(true);
     clearErrors("root");
     try {
-      const place = await fetchPlaceDetails(prediction.place_id);
+      const place = await fetchPlaceDetails(selectedPrediction.place_id);
       createMutation.mutate(place);
     } catch (err) {
       const message =
@@ -88,6 +116,16 @@ export default function SessionCreatePage() {
     } finally {
       setIsFetchingDetail(false);
     }
+  });
+
+  const handleSelect = (prediction: PlacePrediction) => {
+    setSelectedPrediction(prediction);
+    const label = getPredictionLabel(prediction);
+    if (label) {
+      setValue("search", label, { shouldValidate: true });
+    }
+    setPredictions([]);
+    clearErrors("root");
   };
 
   return (
@@ -100,7 +138,25 @@ export default function SessionCreatePage() {
           <p className="text-sm text-gray-700">
             候補から選択するとセッションを開始します。
           </p>
-          <div className="space-y-3">
+          <form className="space-y-3" onSubmit={handleSubmitForm}>
+            <div>
+              <FieldLabel htmlFor="manual-title" required>
+                マニュアルタイトル
+              </FieldLabel>
+              <TextInput
+                id="manual-title"
+                type="text"
+                {...register("manualTitle", {
+                  required: "必須項目です",
+                })}
+                placeholder="例: ○○マンション 防災マニュアル"
+              />
+              {errors.manualTitle?.message ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {String(errors.manualTitle.message)}
+                </p>
+              ) : null}
+            </div>
             <div>
               <FieldLabel htmlFor="place-search">施設名または住所</FieldLabel>
               <TextInput
@@ -126,7 +182,11 @@ export default function SessionCreatePage() {
                     type="button"
                     onClick={() => handleSelect(prediction)}
                     disabled={isFetchingDetail || createMutation.isPending}
-                    className="w-full border-b border-gray-200 px-3 py-2 text-left text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+                    className={`w-full border-b border-gray-200 px-3 py-2 text-left text-sm hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 ${
+                      selectedPrediction?.place_id === prediction.place_id
+                        ? "bg-gray-50"
+                        : ""
+                    }`}
                   >
                     <p className="font-medium text-gray-900">
                       {prediction.main_text ?? prediction.description}
@@ -144,26 +204,28 @@ export default function SessionCreatePage() {
             predictions.length === 0 &&
             !isSearching &&
             !errors.root ? (
-              <p className="text-xs text-gray-600">
-                候補が見つかりませんでした。
-              </p>
+              <span />
             ) : null}
             <div className="flex items-center justify-end gap-2">
               <Button
                 type="button"
                 variant="secondary"
-                size="sm"
+                size="md"
                 onClick={() => navigate("/")}
               >
                 キャンセル
               </Button>
-              <span className="text-xs text-gray-600">
+              <Button
+                type="submit"
+                size="md"
+                disabled={isFetchingDetail || createMutation.isPending}
+              >
                 {isFetchingDetail || createMutation.isPending
                   ? "セッション開始中..."
-                  : null}
-              </span>
+                  : "セッションを開始"}
+              </Button>
             </div>
-          </div>
+          </form>
         </div>
       </Modal>
     </section>

@@ -31,6 +31,7 @@ class SessionDetail(BaseModel):
 
 class SessionCreateRequest(BaseModel):
     place: PlaceDetail
+    manual_title: str | None = None
 
 
 class SessionDetailResponse(BaseModel):
