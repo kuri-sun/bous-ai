@@ -1,4 +1,5 @@
 import base64
+
 from google import genai
 
 from app.core.config import get_settings

@@ -182,7 +182,11 @@ async def agentic_decision(
     for index, prompt in enumerate(illustration_prompts, start=1):
         image_bytes, content_type = generate_illustration(prompt["prompt"])
         illustration_id = prompt["id"]
-        blob_name = f"sessions/{request.session_id}/output/illustrations/{illustration_id}-{index}.png"
+        blob_name = (
+            "sessions/"
+            f"{request.session_id}/output/illustrations/"
+            f"{illustration_id}-{index}.png"
+        )
         gcs_uri = upload_bytes(
             settings.gcs_bucket, blob_name, image_bytes, content_type
         )

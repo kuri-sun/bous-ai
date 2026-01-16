@@ -1,5 +1,4 @@
 import os
-from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Request, UploadFile
 from starlette.datastructures import UploadFile as StarletteUploadFile
