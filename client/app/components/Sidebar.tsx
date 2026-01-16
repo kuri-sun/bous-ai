@@ -58,7 +58,7 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
             >
               <p className="font-semibold text-gray-900">{displayName}</p>
               <p className="mt-1 text-xs text-gray-700">
-                状態: {session.status ?? "step1"}
+                状態: {session.status ?? "step2"}
               </p>
             </button>
           );

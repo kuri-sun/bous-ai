@@ -1,3 +1,4 @@
+import { Link } from "react-router";
 import { useQuery } from "@tanstack/react-query";
 import { fetchSessions } from "../api/sessions";
 import { Sidebar } from "./Sidebar";
@@ -18,9 +19,12 @@ export function AppLayout({ children }: AppLayoutProps) {
     <>
       <header className="h-16 border-b border-gray-200 bg-white/90">
         <div className="flex h-full w-full max-w-6xl items-center justify-between px-4">
-          <span className="text-sm font-semibold text-gray-900">
-            防災マニュアル作成
-          </span>
+          <Link
+            to="/"
+            className="text-lg font-semibold text-gray-900 hover:text-gray-700"
+          >
+            bous-ai
+          </Link>
         </div>
       </header>
       <div className="h-[calc(100vh-4rem)]">

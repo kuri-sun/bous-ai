@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Document, Page, pdfjs } from "react-pdf";
-import { useParams } from "react-router";
+import { Navigate, useParams } from "react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import {
@@ -53,6 +53,7 @@ export default function SessionSummaryPage() {
     queryKey: ["session", sessionId],
     queryFn: () => fetchSessionDetail(sessionId as string),
     enabled: Boolean(sessionId),
+    retry: false,
   });
 
   useEffect(() => {
@@ -160,7 +161,7 @@ export default function SessionSummaryPage() {
   });
 
   if (isNotFound) {
-    return <CenteredPageState title="ページが見つかりません。" tone="muted" />;
+    return <Navigate to="/" replace />;
   }
 
   return (
