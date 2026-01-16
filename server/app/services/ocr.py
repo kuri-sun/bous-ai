@@ -28,9 +28,7 @@ def _detect_text_from_image(image_bytes: bytes) -> str:
     return response.full_text_annotation.text or ""
 
 
-def _detect_text_from_pdf(
-    file_bytes: bytes, filename: str, gcs_uri: str
-) -> str:
+def _detect_text_from_pdf(file_bytes: bytes, filename: str, gcs_uri: str) -> str:
     settings = get_settings()
     if not settings.gcs_bucket:
         raise RuntimeError("GCS_BUCKET is not set")

@@ -56,7 +56,9 @@ async def generate(
         raise HTTPException(status_code=500, detail="GCS_BUCKET is not set")
 
     if image_list and len(descriptions) != len(image_list):
-        raise HTTPException(status_code=400, detail="image_descriptions length mismatch")
+        raise HTTPException(
+            status_code=400, detail="image_descriptions length mismatch"
+        )
 
     uploaded_images: list[InputImage] = []
     for index, image in enumerate(image_list):

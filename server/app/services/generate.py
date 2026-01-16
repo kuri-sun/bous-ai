@@ -94,8 +94,8 @@ def _build_html_prompt(
         "illustration://ID のプレースホルダーは、対応するURLに置換して"
         "画像として差し込んでください。"
         "input_imagesのpublic_urlはすべてHTMLに反映し、"
-        "画像は<div class=\"image-block\">で囲み、"
-        "<img class=\"manual-image\">で出力してください。"
+        '画像は<div class="image-block">で囲み、'
+        '<img class="manual-image">で出力してください。'
         "画像にstyle属性は付けないでください。"
         "画像には枠線やボーダーを付けないでください。"
         "CSSは<head>内の<style>に含め、読みやすい構成にしてください。"

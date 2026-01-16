@@ -58,7 +58,7 @@ export const ManualGenerateForm = forwardRef<
   ) => {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
-  const {
+    const {
       register,
       control,
       handleSubmit,
@@ -68,55 +68,55 @@ export const ManualGenerateForm = forwardRef<
       watch,
       reset,
       formState: { errors, isSubmitting },
-  } = useForm<FormValues>({
+    } = useForm<FormValues>({
       defaultValues: {
         memo: defaultMemo,
         images: [{ file: null, description: "" }],
       },
     });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "images",
-  });
-
-  const watchedImages = watch("images");
-  const [previewUrls, setPreviewUrls] = useState<(string | null)[]>([]);
-
-  useEffect(() => {
-    setPreviewUrls((prevUrls) => {
-      const nextUrls = watchedImages.map((image, index) => {
-        const file = image?.file;
-        if (!file) {
-          if (prevUrls[index]) {
-            URL.revokeObjectURL(prevUrls[index] as string);
-          }
-          return null;
-        }
-        const prevUrl = prevUrls[index];
-        if (prevUrl) {
-          URL.revokeObjectURL(prevUrl);
-        }
-        return URL.createObjectURL(file);
-      });
-      prevUrls.slice(nextUrls.length).forEach((url) => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
-      });
-      return nextUrls;
+    const { fields, append, remove } = useFieldArray({
+      control,
+      name: "images",
     });
-  }, [watchedImages]);
 
-  useEffect(() => {
-    return () => {
-      previewUrls.forEach((url) => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
+    const watchedImages = watch("images");
+    const [previewUrls, setPreviewUrls] = useState<(string | null)[]>([]);
+
+    useEffect(() => {
+      setPreviewUrls((prevUrls) => {
+        const nextUrls = watchedImages.map((image, index) => {
+          const file = image?.file;
+          if (!file) {
+            if (prevUrls[index]) {
+              URL.revokeObjectURL(prevUrls[index] as string);
+            }
+            return null;
+          }
+          const prevUrl = prevUrls[index];
+          if (prevUrl) {
+            URL.revokeObjectURL(prevUrl);
+          }
+          return URL.createObjectURL(file);
+        });
+        prevUrls.slice(nextUrls.length).forEach((url) => {
+          if (url) {
+            URL.revokeObjectURL(url);
+          }
+        });
+        return nextUrls;
       });
-    };
-  }, [previewUrls]);
+    }, [watchedImages]);
+
+    useEffect(() => {
+      return () => {
+        previewUrls.forEach((url) => {
+          if (url) {
+            URL.revokeObjectURL(url);
+          }
+        });
+      };
+    }, [previewUrls]);
 
     useImperativeHandle(
       ref,
@@ -130,8 +130,7 @@ export const ManualGenerateForm = forwardRef<
                   throw new Error("サンプル画像の取得に失敗しました。");
                 }
                 const blob = await response.blob();
-                const filename =
-                  sample.url.split("/").pop() || "sample-image";
+                const filename = sample.url.split("/").pop() || "sample-image";
                 const file = new File([blob], filename, {
                   type: blob.type || "image/png",
                 });
