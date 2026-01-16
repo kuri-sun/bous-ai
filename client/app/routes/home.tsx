@@ -7,7 +7,7 @@ export default function Home() {
       <div className="w-full max-w-xl px-6 text-center">
         <h1 className="text-2xl font-semibold">防災マニュアルを作成</h1>
         <p className="mt-3 text-sm text-gray-700">
-          メモ・議事録や見本PDFから、防災マニュアルPDFを作成します。
+          メモと画像から、防災マニュアルPDFを作成します。
         </p>
         <div className="mt-6 flex justify-center">
           <Link to="/sessions/create" className={buttonClasses({ size: "lg" })}>

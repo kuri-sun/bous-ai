@@ -39,7 +39,7 @@ def create_session_entry(request: SessionCreateRequest) -> SessionDetailResponse
     if not request.place or not request.place.place_id:
         raise HTTPException(status_code=400, detail="place is required")
     session_id = create_session(
-        {"status": "step1", "place": request.place.model_dump()}
+        {"status": "step2", "place": request.place.model_dump()}
     )
     session = get_session(session_id)
     return SessionDetailResponse(session=session)

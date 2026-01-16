@@ -9,10 +9,17 @@ from app.schemas.agentic import (
     AgenticStartRequest,
 )
 from app.services.agentic import build_agentic_turn
-from app.services.generate import generate_manual_html, generate_manual_pdf
+from app.services.generate import (
+    IllustrationImage,
+    InputImage,
+    generate_manual_html_from_markdown,
+    generate_manual_pdf,
+    generate_markdown_with_prompts,
+)
+from app.services.nanobanana import generate_illustration
 from app.services.search import search_official_manual
 from app.services.sessions import get_session, update_session
-from app.services.storage import upload_bytes
+from app.services.storage import public_url, upload_bytes
 
 router = APIRouter()
 
@@ -21,7 +28,6 @@ def _build_agentic_context(session: dict) -> dict:
     inputs = session.get("inputs") or {}
     return {
         "place": session.get("place") or {},
-        "extracted": inputs.get("step1_extracted") or {},
         "answers": inputs.get("step2") or {},
         "generated_html": inputs.get("step2_html") or "",
         "generated_plain_text": inputs.get("step2_plain_text") or "",
@@ -137,16 +143,69 @@ async def agentic_decision(
         raise HTTPException(status_code=400, detail="Proposal is missing")
 
     inputs = session.get("inputs") or {}
-    answers = dict(inputs.get("step2") or {})
-    answers["agentic_proposal"] = proposal.strip()
-    extracted = inputs.get("step1_extracted") or {}
+    step2 = inputs.get("step2") or {}
+    memo = step2.get("memo")
+    raw_images = step2.get("uploaded_images")
+    if not isinstance(memo, str):
+        raise HTTPException(status_code=400, detail="Step2 memo is missing")
+    if not isinstance(raw_images, list):
+        raise HTTPException(status_code=400, detail="Step2 images are missing")
+    uploaded_images: list[InputImage] = []
+    for item in raw_images:
+        if not isinstance(item, dict):
+            continue
+        description = item.get("description")
+        public_url_value = item.get("public_url")
+        if not isinstance(description, str) or not isinstance(public_url_value, str):
+            continue
+        uploaded_images.append(
+            {
+                "description": description,
+                "public_url": public_url_value,
+                "gcs_uri": item.get("gcs_uri"),
+                "filename": item.get("filename"),
+                "content_type": item.get("content_type"),
+            }
+        )
+    if not uploaded_images and raw_images:
+        raise HTTPException(status_code=400, detail="Step2 images are invalid")
 
-    html, plain_text = generate_manual_html(answers, extracted)
-    pdf_bytes = await generate_manual_pdf(html)
+    markdown, illustration_prompts = generate_markdown_with_prompts(
+        memo, uploaded_images, proposal.strip()
+    )
 
     settings = get_settings()
     if not settings.gcs_bucket:
         raise HTTPException(status_code=500, detail="GCS_BUCKET is not set")
+
+    illustration_images: list[IllustrationImage] = []
+    for index, prompt in enumerate(illustration_prompts, start=1):
+        image_bytes, content_type = generate_illustration(prompt["prompt"])
+        illustration_id = prompt["id"]
+        blob_name = (
+            "sessions/"
+            f"{request.session_id}/output/illustrations/"
+            f"{illustration_id}-{index}.png"
+        )
+        gcs_uri = upload_bytes(
+            settings.gcs_bucket, blob_name, image_bytes, content_type
+        )
+        illustration_images.append(
+            {
+                "id": illustration_id,
+                "prompt": prompt["prompt"],
+                "public_url": public_url(settings.gcs_bucket, blob_name),
+                "gcs_uri": gcs_uri,
+                "content_type": content_type,
+                "alt": prompt.get("alt"),
+            }
+        )
+
+    html, plain_text = generate_manual_html_from_markdown(
+        markdown, uploaded_images, illustration_images, proposal.strip()
+    )
+    pdf_bytes = await generate_manual_pdf(html)
+
     blob_name = f"sessions/{request.session_id}/output/manual.pdf"
     upload_bytes(settings.gcs_bucket, blob_name, pdf_bytes, "application/pdf")
 
@@ -164,7 +223,13 @@ async def agentic_decision(
             "pdf_blob_name": blob_name,
             "inputs": {
                 **inputs,
-                "step2": answers,
+                "step2": {
+                    "memo": memo,
+                    "uploaded_images": uploaded_images,
+                    "illustration_prompts": illustration_prompts,
+                    "illustration_images": illustration_images,
+                    "markdown": markdown,
+                },
                 "step2_html": html,
                 "step2_plain_text": plain_text,
                 "agentic": {"proposal": proposal},

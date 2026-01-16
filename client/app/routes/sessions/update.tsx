@@ -1,23 +1,18 @@
 import { useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Navigate, useParams } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
-  InputAnalyzeForm,
-  type InputAnalyzeFormHandle,
-} from "../../components/InputAnalyzeForm";
+  ManualGenerateForm,
+  type ManualGenerateFormHandle,
+} from "../../components/ManualGenerateForm";
 import { Button } from "../../components/ui/Button";
-import { CenteredPageState } from "../../components/ui/CenteredPageState";
-import type { AnalyzeResponse } from "../../types/manual";
-import { API_BASE, SAMPLE_MEMO } from "../../constants";
+import { SAMPLE_MEMO } from "../../constants";
 import { fetchSessionDetail, NotFoundError } from "../../api/sessions";
 
 export default function SessionDetailPage() {
   const params = useParams<{ id?: string }>();
   const sessionId = typeof params.id === "string" ? params.id : null;
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const analyzeFormRef = useRef<InputAnalyzeFormHandle | null>(null);
-  const [generateError, setGenerateError] = useState("");
+  const generateFormRef = useRef<ManualGenerateFormHandle | null>(null);
   const [isFillingSample, setIsFillingSample] = useState(false);
 
   const {
@@ -28,84 +23,39 @@ export default function SessionDetailPage() {
     queryKey: ["session", sessionId],
     queryFn: () => fetchSessionDetail(sessionId as string),
     enabled: Boolean(sessionId),
+    retry: false,
   });
 
   const session = sessionDetail?.session ?? null;
   const inputDefaults = useMemo(() => {
-    const step1 = (session?.inputs?.step1 ?? {}) as Record<string, unknown>;
+    const step2 = (session?.inputs?.step2 ?? {}) as Record<string, unknown>;
     return {
-      memo: typeof step1.memo === "string" ? step1.memo : "",
+      memo: typeof step2.memo === "string" ? step2.memo : "",
     };
   }, [session?.inputs]);
 
-  const generateMutation = useMutation({
-    mutationFn: async (payload: {
-      sessionId: string;
-      extracted: Record<string, unknown> | null;
-    }) => {
-      const response = await fetch(`${API_BASE}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          session_id: payload.sessionId,
-          extracted: payload.extracted ?? null,
-          answers: {},
-          source_meta: { source_type: "mixed" },
-        }),
-      });
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "PDF生成に失敗しました。");
-      }
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["sessions"] });
-      if (sessionId) {
-        navigate(`/sessions/${sessionId}/summary`);
-      }
-    },
-    onError: (err) => {
-      const message =
-        err instanceof Error ? err.message : "予期しないエラーです。";
-      setGenerateError(message);
-    },
-  });
-
-  const handleAnalyzed = (data: AnalyzeResponse) => {
-    setGenerateError("");
-    if (data.session_id) {
-      generateMutation.mutate({
-        sessionId: data.session_id,
-        extracted: (data.extracted as Record<string, unknown>) ?? null,
-      });
-    } else {
-      setGenerateError("セッションIDが取得できません。");
-    }
-  };
-
   if (sessionError instanceof NotFoundError || !sessionId) {
-    return <CenteredPageState title="ページが見つかりません。" tone="muted" />;
+    return <Navigate to="/" replace />;
   }
 
   if (isLoading && !sessionDetail) {
-    return <CenteredPageState title="読み込み中..." tone="muted" />;
+    return null;
   }
 
   return (
     <section className="bg-white p-8 text-gray-900">
       <header className="mb-6 flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">メモとPDF/画像ファイル入力</h2>
+        <h2 className="text-xl font-semibold">メモと差し込み画像の入力</h2>
         <Button
           type="button"
           variant="secondary"
           size="sm"
           onClick={async () => {
-            if (!analyzeFormRef.current) {
+            if (!generateFormRef.current) {
               return;
             }
             setIsFillingSample(true);
-            await analyzeFormRef.current.fillSample();
+            await generateFormRef.current.fillSample();
             setIsFillingSample(false);
           }}
           disabled={isFillingSample}
@@ -114,22 +64,25 @@ export default function SessionDetailPage() {
         </Button>
       </header>
 
-      <InputAnalyzeForm
+      <ManualGenerateForm
         key={`session-input-${sessionId}`}
-        ref={analyzeFormRef}
+        ref={generateFormRef}
         sampleMemo={SAMPLE_MEMO}
-        sampleFileUrl="/assets/tokyo_manshion.pdf"
-        defaultTextInput={inputDefaults.memo}
+        sampleImages={[
+          {
+            url: "/assets/escape.png",
+            description: "マンションの避難経路図の写真。",
+          },
+          {
+            url: "/assets/garage.png",
+            description: "マンションの備品倉庫内の写真。",
+          },
+        ]}
+        defaultMemo={inputDefaults.memo}
         sessionId={sessionId}
-        onAnalyzed={handleAnalyzed}
         submitLabel="PDFを作成"
-        submitLoadingLabel="解析中..."
-        isBusy={generateMutation.isPending}
-        busyLabel="PDF生成中..."
+        submitLoadingLabel="生成中..."
       />
-      {generateError ? (
-        <p className="mt-4 text-sm text-red-600">{generateError}</p>
-      ) : null}
     </section>
   );
 }

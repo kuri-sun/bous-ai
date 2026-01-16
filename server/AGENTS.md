@@ -22,7 +22,7 @@
 
 ## Agent編集フロー
 - エンドポイント: `/agentic/start`, `/agentic/respond`, `/agentic/decision`
-- LLM コンテキスト: 住所情報、OCR 抽出（アップロード/検索PDF）、生成 HTML/プレーンテキスト、検索結果の参照テキスト
+- LLM コンテキスト: 住所情報、生成 HTML/プレーンテキスト、検索PDFのOCRテキスト
 - 提案受諾で PDF を再生成し、入力 (step2) を更新して保存
 
 ## 環境変数（`app/core/config.py` 参照）
