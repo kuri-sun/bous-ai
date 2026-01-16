@@ -13,3 +13,11 @@ def upload_bytes(
 
 def public_url(bucket_name: str, blob_name: str) -> str:
     return f"https://storage.googleapis.com/{bucket_name}/{blob_name}"
+
+
+def delete_prefix(bucket_name: str, prefix: str) -> None:
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blobs = list(bucket.list_blobs(prefix=prefix))
+    for blob in blobs:
+        blob.delete()

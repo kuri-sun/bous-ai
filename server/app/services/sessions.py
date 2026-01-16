@@ -89,3 +89,8 @@ def get_session_pdf_blob_name(session_id: str) -> str | None:
     if isinstance(blob_name, str) and blob_name:
         return blob_name
     return None
+
+
+def delete_session(session_id: str) -> None:
+    db = _client()
+    db.collection(SESSIONS_COLLECTION).document(session_id).delete()

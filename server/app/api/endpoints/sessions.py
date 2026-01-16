@@ -13,10 +13,12 @@ from app.schemas.session import (
 )
 from app.services.sessions import (
     create_session,
+    delete_session,
     get_session,
     get_session_pdf_blob_name,
     list_sessions,
 )
+from app.services.storage import delete_prefix
 
 router = APIRouter()
 
@@ -72,3 +74,14 @@ def download_session_pdf(session_id: str) -> StreamingResponse:
     return StreamingResponse(
         io.BytesIO(data), media_type="application/pdf", headers=headers
     )
+
+
+@router.delete("/sessions/{session_id}", status_code=204)
+def delete_session_entry(session_id: str) -> None:
+    session = get_session(session_id)
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+    settings = get_settings()
+    if settings.gcs_bucket:
+        delete_prefix(settings.gcs_bucket, f"sessions/{session_id}/")
+    delete_session(session_id)

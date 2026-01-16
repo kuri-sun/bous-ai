@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteSession } from "../api/sessions";
 import type { SessionSummary } from "../api/sessions";
 import { Button } from "./ui/Button";
 
@@ -11,6 +13,8 @@ type SidebarProps = {
 export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const queryClient = useQueryClient();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const activeId = useMemo(() => {
     const parts = location.pathname.split("/");
@@ -19,6 +23,22 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
     }
     return null;
   }, [location.pathname]);
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await deleteSession(id);
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      if (activeId === id) {
+        navigate("/");
+      }
+      setDeletingId(null);
+    },
+    onError: () => {
+      setDeletingId(null);
+    },
+  });
 
   return (
     <aside className="h-full overflow-y-auto border-r border-gray-200">
@@ -42,25 +62,53 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
           const displayName =
             placeName ?? placeAddress ?? `セッション ${session.id.slice(0, 8)}`;
           return (
-            <button
+            <div
               key={session.id}
-              type="button"
-              onClick={() =>
-                navigate(
-                  session.status === "done"
-                    ? `/sessions/${session.id}/summary`
-                    : `/sessions/${session.id}`,
-                )
-              }
-              className={`w-full px-3 py-2 text-left text-sm hover:bg-gray-50 ${
+              className={`w-full border-b border-gray-100 px-3 py-2 text-left text-sm ${
                 activeId === session.id ? "bg-gray-50" : ""
               }`}
             >
-              <p className="font-semibold text-gray-900">{displayName}</p>
-              <p className="mt-1 text-xs text-gray-700">
-                状態: {session.status ?? "step2"}
-              </p>
-            </button>
+              <button
+                type="button"
+                onClick={() =>
+                  navigate(
+                    session.status === "done"
+                      ? `/sessions/${session.id}/summary`
+                      : `/sessions/${session.id}`,
+                  )
+                }
+                className="w-full text-left hover:text-gray-900"
+              >
+                <p className="font-semibold text-gray-900">{displayName}</p>
+              </button>
+              <div className="mt-2 flex items-center justify-end">
+                <Button
+                  type="button"
+                  variant="danger"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    if (deleteMutation.isPending || deletingId === session.id) {
+                      return;
+                    }
+                    if (
+                      !window.confirm(
+                        "この防災マニュアルを削除します。よろしいですか？",
+                      )
+                    ) {
+                      return;
+                    }
+                    setDeletingId(session.id);
+                    deleteMutation.mutate(session.id);
+                  }}
+                  disabled={
+                    deleteMutation.isPending || deletingId === session.id
+                  }
+                >
+                  {deletingId === session.id ? "削除中..." : "削除"}
+                </Button>
+              </div>
+            </div>
           );
         })
       )}
