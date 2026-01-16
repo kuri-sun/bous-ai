@@ -59,7 +59,8 @@ def _build_markdown_prompt(
         "さらに、適切な箇所に追加すべきイラストのプレースホルダーを"
         "Markdown中に挿入し、そのイラスト生成用プロンプトも作成してください。"
         "出力は必ずJSONのみで次の形式にしてください:\n"
-        '{"markdown": "...", "illustration_prompts": [{"id": "illust-1", "prompt": "...", "alt": "..."}]}\n'
+        '{"markdown": "...", "illustration_prompts": '
+        '[{"id": "illust-1", "prompt": "...", "alt": "..."}]}\n'
         "illustration_promptsは2〜3件の配列で、idはMarkdown内の"
         "プレースホルダー ![ALT](illustration://ID) と一致させます。"
         "イラストのプロンプトは日本語で、"
@@ -96,8 +97,8 @@ def _build_html_prompt(
         "illustration://ID のプレースホルダーは、対応するURLに置換して"
         "画像として差し込んでください。"
         "input_imagesのpublic_urlはすべてHTMLに反映し、"
-        "画像は<div class=\"image-block\">で囲み、"
-        "<img class=\"manual-image\">で出力してください。"
+        '画像は<div class="image-block">で囲み、'
+        '<img class="manual-image">で出力してください。'
         "画像にstyle属性は付けないでください。"
         "画像には枠線やボーダーを付けないでください。"
         "CSSは<head>内の<style>に含め、読みやすい構成にしてください。"
@@ -115,7 +116,8 @@ def _build_html_prompt(
         "height: auto; object-fit: contain; border: none; }"
         ".image-block img { max-width: 160mm !important; "
         "max-height: 90mm !important; }"
-        ".image-block { margin: 6mm 0; display: flex; justify-content: center; }"
+        ".image-block { margin: 6mm 0; display: flex; "
+        "justify-content: center; }"
         "大きな表やリストは複数のsectionに分割して下さい。"
         "余計な説明やコードフェンスは不要です。\n\n"
     )
