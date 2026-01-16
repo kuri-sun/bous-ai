@@ -29,6 +29,7 @@ type FormImage = {
 type FormValues = {
   memo: string;
   images: FormImage[];
+  root?: string;
 };
 
 type GenerateResponse = {
@@ -229,14 +230,12 @@ export const ManualGenerateForm = forwardRef<
       if (memoValue) {
         formData.append("memo", memoValue);
       }
-      let sentPairs = 0;
       values.images.forEach((image) => {
         if (!image.file) {
           return;
         }
         formData.append("images", image.file);
         formData.append("image_descriptions", image.description.trim());
-        sentPairs += 1;
       });
       generateMutation.mutate(formData);
     });
