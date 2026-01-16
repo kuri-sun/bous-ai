@@ -6,8 +6,8 @@ from starlette.datastructures import UploadFile as StarletteUploadFile
 from app.core.config import get_settings
 from app.schemas.manual import GenerateResponse
 from app.services.generate import (
-    InputImage,
     IllustrationImage,
+    InputImage,
     generate_manual_html_from_markdown,
     generate_manual_pdf,
     generate_markdown_with_prompts,
