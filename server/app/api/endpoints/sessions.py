@@ -40,12 +40,13 @@ def session_detail(session_id: str) -> SessionDetailResponse:
 def create_session_entry(request: SessionCreateRequest) -> SessionDetailResponse:
     if not request.place or not request.place.place_id:
         raise HTTPException(status_code=400, detail="place is required")
-    manual_title = (request.manual_title or "").strip() or "防災マニュアル"
+    name = (request.name or "").strip()
+    author = (request.author or "").strip()
     session_id = create_session(
         {
             "status": "step2",
             "place": request.place.model_dump(),
-            "inputs": {"step1": {"manual_title": manual_title}},
+            "inputs": {"step1": {"name": name, "author": author}},
         }
     )
     session = get_session(session_id)

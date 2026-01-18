@@ -26,11 +26,12 @@ export default function SessionCreatePage() {
     clearErrors,
     setValue,
     formState: { errors },
-  } = useForm<{ search: string; manualTitle: string }>({
-    defaultValues: { search: "", manualTitle: "" },
+  } = useForm<{ search: string; name: string; author: string }>({
+    defaultValues: { search: "", name: "", author: "" },
   });
   const searchInput = watch("search") ?? "";
-  const manualTitle = watch("manualTitle") ?? "";
+  const name = watch("name") ?? "";
+  const author = watch("author") ?? "";
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
   const [selectedPrediction, setSelectedPrediction] =
     useState<PlacePrediction | null>(null);
@@ -39,7 +40,7 @@ export default function SessionCreatePage() {
 
   const createMutation = useMutation({
     mutationFn: (place: PlaceDetail) =>
-      createSession(place, manualTitle.trim()),
+      createSession(place, name.trim(), author.trim()),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
       clearErrors("root");
@@ -97,6 +98,20 @@ export default function SessionCreatePage() {
   }, [searchInput, selectedPrediction, clearErrors, setError]);
 
   const handleSubmitForm = handleSubmit(async () => {
+    if (!name.trim()) {
+      setError("name", {
+        type: "manual",
+        message: "名称を入力してください。",
+      });
+      return;
+    }
+    if (!author.trim()) {
+      setError("author", {
+        type: "manual",
+        message: "発行者を入力してください。",
+      });
+      return;
+    }
     if (!selectedPrediction) {
       setError("root", {
         type: "manual",
@@ -140,20 +155,38 @@ export default function SessionCreatePage() {
           </p>
           <form className="space-y-3" onSubmit={handleSubmitForm}>
             <div>
-              <FieldLabel htmlFor="manual-title" required>
-                マニュアルタイトル
+              <FieldLabel htmlFor="name" required>
+                名称
               </FieldLabel>
               <TextInput
-                id="manual-title"
+                id="name"
                 type="text"
-                {...register("manualTitle", {
+                {...register("name", {
                   required: "必須項目です",
                 })}
-                placeholder="例: ○○マンション 防災マニュアル"
+                placeholder="例: ○○マンション"
               />
-              {errors.manualTitle?.message ? (
+              {errors.name?.message ? (
                 <p className="mt-1 text-xs text-red-600">
-                  {String(errors.manualTitle.message)}
+                  {String(errors.name.message)}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <FieldLabel htmlFor="author" required>
+                発行者
+              </FieldLabel>
+              <TextInput
+                id="author"
+                type="text"
+                {...register("author", {
+                  required: "必須項目です",
+                })}
+                placeholder="例: 管理組合 防災担当"
+              />
+              {errors.author?.message ? (
+                <p className="mt-1 text-xs text-red-600">
+                  {String(errors.author.message)}
                 </p>
               ) : null}
             </div>

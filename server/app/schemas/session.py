@@ -31,7 +31,8 @@ class SessionDetail(BaseModel):
 
 class SessionCreateRequest(BaseModel):
     place: PlaceDetail
-    manual_title: str | None = None
+    name: str | None = None
+    author: str | None = None
 
 
 class SessionDetailResponse(BaseModel):
