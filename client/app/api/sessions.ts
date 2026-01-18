@@ -50,12 +50,17 @@ export const fetchSessions = async () => {
 
 export const createSession = async (
   place: PlaceDetail,
-  manualTitle: string,
+  name: string,
+  author: string,
 ) => {
   const response = await fetch(`${API_BASE}/api/sessions`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ place, manual_title: manualTitle }),
+    body: JSON.stringify({
+      place,
+      name,
+      author,
+    }),
   });
   if (!response.ok) {
     const text = await response.text();

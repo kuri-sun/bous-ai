@@ -1,3 +1,5 @@
+import html as html_lib
+
 from fastapi import APIRouter, HTTPException
 
 from app.core.config import get_settings
@@ -8,18 +10,16 @@ from app.schemas.agentic import (
     AgenticRespondRequest,
     AgenticStartRequest,
 )
+from app.schemas.manual import IllustrationImage, InputImage
 from app.services.agentic import build_agentic_turn
 from app.services.generate import (
-    IllustrationImage,
-    InputImage,
-    generate_manual_html_from_markdown,
+    generate_manual_html_with_proposal,
     generate_manual_pdf,
-    generate_markdown_with_prompts,
 )
-from app.services.nanobanana import generate_illustration
 from app.services.search import search_official_manual
 from app.services.sessions import get_session, update_session
-from app.services.storage import public_url, upload_bytes
+from app.services.storage import upload_bytes
+from app.utils.dates import build_issued_on
 
 router = APIRouter()
 
@@ -29,8 +29,8 @@ def _build_agentic_context(session: dict) -> dict:
     return {
         "place": session.get("place") or {},
         "answers": inputs.get("step2") or {},
-        "generated_html": inputs.get("step2_html") or "",
-        "generated_plain_text": inputs.get("step2_plain_text") or "",
+        "generated_html": inputs.get("html") or "",
+        "generated_markdown": inputs.get("markdown") or "",
     }
 
 
@@ -39,8 +39,12 @@ def _coerce_history(raw_history: list[dict] | None) -> list[dict[str, str]]:
     for item in raw_history or []:
         role = item.get("role")
         content = item.get("content")
-    if role in {"assistant", "user"} and isinstance(content, str) and content.strip():
-        history.append({"role": role, "content": content.strip()})
+        if (
+            role in {"assistant", "user"}
+            and isinstance(content, str)
+            and content.strip()
+        ):
+            history.append({"role": role, "content": content.strip()})
     return history
 
 
@@ -143,7 +147,11 @@ async def agentic_decision(
         raise HTTPException(status_code=400, detail="Proposal is missing")
 
     inputs = session.get("inputs") or {}
+    step1 = inputs.get("step1") or {}
     step2 = inputs.get("step2") or {}
+    if not isinstance(step2, dict):
+        raise HTTPException(status_code=400, detail="Step2 data is missing")
+
     memo = step2.get("memo")
     raw_images = step2.get("uploaded_images")
     if not isinstance(memo, str):
@@ -170,51 +178,62 @@ async def agentic_decision(
     if not uploaded_images and raw_images:
         raise HTTPException(status_code=400, detail="Step2 images are invalid")
 
-    inputs = session.get("inputs") or {}
-    step1 = inputs.get("step1") or {}
-    manual_title = step1.get("manual_title") if isinstance(step1, dict) else None
-    manual_title = (
-        manual_title.strip()
-        if isinstance(manual_title, str) and manual_title.strip()
-        else "防災マニュアル"
-    )
+    previous_markdown = inputs.get("markdown")
+    previous_html = inputs.get("html")
+    if not isinstance(previous_markdown, str) or not previous_markdown.strip():
+        raise HTTPException(status_code=400, detail="Step2 markdown is missing")
+    if not isinstance(previous_html, str) or not previous_html.strip():
+        raise HTTPException(status_code=400, detail="Step2 html is missing")
+    previous_html = html_lib.unescape(previous_html)
 
-    markdown, illustration_prompts = generate_markdown_with_prompts(
-        memo, uploaded_images, manual_title, proposal.strip()
+    name = ""
+    author = ""
+    issued_on = ""
+    if isinstance(step1, dict):
+        name = str(step1.get("name") or "").strip()
+        author = str(step1.get("author") or "").strip()
+    if isinstance(step2.get("issued_on"), str):
+        issued_on = step2.get("issued_on").strip()
+    if not issued_on:
+        issued_on = build_issued_on()
+    manual_title = f"{name} 防災マニュアル" if name else "防災マニュアル"
+
+    illustration_images: list[IllustrationImage] = []
+    raw_illustrations = step2.get("illustration_images")
+    if isinstance(raw_illustrations, list):
+        for item in raw_illustrations:
+            if not isinstance(item, dict):
+                continue
+            illustration_id = item.get("id")
+            public_url_value = item.get("public_url")
+            prompt_text = item.get("prompt")
+            if (
+                not isinstance(illustration_id, str)
+                or not isinstance(public_url_value, str)
+                or not isinstance(prompt_text, str)
+            ):
+                continue
+            illustration_images.append(
+                {
+                    "id": illustration_id,
+                    "prompt": prompt_text,
+                    "public_url": public_url_value,
+                    "gcs_uri": item.get("gcs_uri"),
+                    "content_type": item.get("content_type"),
+                    "alt": item.get("alt"),
+                }
+            )
+
+    html, markdown = generate_manual_html_with_proposal(
+        previous_markdown,
+        previous_html,
+        proposal.strip(),
     )
+    pdf_bytes = await generate_manual_pdf(html)
 
     settings = get_settings()
     if not settings.gcs_bucket:
         raise HTTPException(status_code=500, detail="GCS_BUCKET is not set")
-
-    illustration_images: list[IllustrationImage] = []
-    for index, prompt in enumerate(illustration_prompts, start=1):
-        image_bytes, content_type = generate_illustration(prompt["prompt"])
-        illustration_id = prompt["id"]
-        blob_name = (
-            "sessions/"
-            f"{request.session_id}/output/illustrations/"
-            f"{illustration_id}-{index}.png"
-        )
-        gcs_uri = upload_bytes(
-            settings.gcs_bucket, blob_name, image_bytes, content_type
-        )
-        illustration_images.append(
-            {
-                "id": illustration_id,
-                "prompt": prompt["prompt"],
-                "public_url": public_url(settings.gcs_bucket, blob_name),
-                "gcs_uri": gcs_uri,
-                "content_type": content_type,
-                "alt": prompt.get("alt"),
-            }
-        )
-
-    html, plain_text = generate_manual_html_from_markdown(
-        markdown, uploaded_images, illustration_images, proposal.strip()
-    )
-    pdf_bytes = await generate_manual_pdf(html)
-
     blob_name = f"sessions/{request.session_id}/output/manual.pdf"
     upload_bytes(settings.gcs_bucket, blob_name, pdf_bytes, "application/pdf")
 
@@ -235,13 +254,14 @@ async def agentic_decision(
                 "step2": {
                     "memo": memo,
                     "manual_title": manual_title,
+                    "name": name,
+                    "author": author,
+                    "issued_on": issued_on,
                     "uploaded_images": uploaded_images,
-                    "illustration_prompts": illustration_prompts,
                     "illustration_images": illustration_images,
-                    "markdown": markdown,
                 },
-                "step2_html": html,
-                "step2_plain_text": plain_text,
+                "html": html,
+                "markdown": markdown,
                 "agentic": {"proposal": proposal},
             },
             "agentic": agentic_state,

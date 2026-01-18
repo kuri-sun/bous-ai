@@ -4,10 +4,8 @@ from fastapi import APIRouter, HTTPException, Request, UploadFile
 from starlette.datastructures import UploadFile as StarletteUploadFile
 
 from app.core.config import get_settings
-from app.schemas.manual import GenerateResponse
+from app.schemas.manual import GenerateResponse, IllustrationImage, InputImage
 from app.services.generate import (
-    IllustrationImage,
-    InputImage,
     generate_manual_html_from_markdown,
     generate_manual_pdf,
     generate_markdown_with_prompts,
@@ -15,6 +13,7 @@ from app.services.generate import (
 from app.services.nanobanana import generate_illustration
 from app.services.sessions import get_session, update_session
 from app.services.storage import public_url, upload_bytes
+from app.utils.dates import build_issued_on
 
 router = APIRouter()
 
@@ -81,15 +80,21 @@ async def generate(
 
     inputs = session.get("inputs") or {}
     step1 = inputs.get("step1") or {}
-    manual_title = step1.get("manual_title") if isinstance(step1, dict) else None
-    manual_title = (
-        manual_title.strip()
-        if isinstance(manual_title, str) and manual_title.strip()
-        else "防災マニュアル"
-    )
+    name = ""
+    author = ""
+    if isinstance(step1, dict):
+        name = str(step1.get("name") or "").strip()
+        author = str(step1.get("author") or "").strip()
+    manual_title = f"{name} 防災マニュアル" if name else "防災マニュアル"
 
+    issued_on = build_issued_on()
     markdown, illustration_prompts = generate_markdown_with_prompts(
-        memo, uploaded_images, manual_title
+        memo,
+        uploaded_images,
+        manual_title,
+        name,
+        author,
+        issued_on,
     )
 
     illustration_images: list[IllustrationImage] = []
@@ -113,7 +118,7 @@ async def generate(
             }
         )
 
-    html, plain_text = generate_manual_html_from_markdown(
+    html, markdown = generate_manual_html_from_markdown(
         markdown, uploaded_images, illustration_images
     )
     pdf_bytes = await generate_manual_pdf(html)
@@ -129,13 +134,15 @@ async def generate(
                 "step2": {
                     "memo": memo,
                     "manual_title": manual_title,
+                    "name": name,
+                    "author": author,
+                    "issued_on": issued_on,
                     "uploaded_images": uploaded_images,
                     "illustration_prompts": illustration_prompts,
                     "illustration_images": illustration_images,
-                    "markdown": markdown,
                 },
-                "step2_html": html,
-                "step2_plain_text": plain_text,
+                "html": html,
+                "markdown": markdown,
             },
         },
     )
