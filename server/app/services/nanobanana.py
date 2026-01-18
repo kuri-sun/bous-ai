@@ -1,14 +1,7 @@
-import base64
-
 from google import genai
 
 from app.core.config import get_settings
-
-
-def _coerce_bytes(data: bytes | str) -> bytes:
-    if isinstance(data, bytes):
-        return data
-    return base64.b64decode(data)
+from app.utils.bytes import coerce_bytes
 
 
 def generate_illustration(prompt: str) -> tuple[bytes, str]:
@@ -33,6 +26,6 @@ def generate_illustration(prompt: str) -> tuple[bytes, str]:
             if not data:
                 continue
             mime_type = getattr(inline_data, "mime_type", None) or "image/png"
-            return _coerce_bytes(data), mime_type
+            return coerce_bytes(data), mime_type
 
     raise RuntimeError("NanoBanana response did not include image data")

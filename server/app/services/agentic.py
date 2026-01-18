@@ -1,25 +1,12 @@
 import json
-import re
 from typing import Any
 
 from langchain_core.messages import HumanMessage
 
 from app.services.llm import get_llm
+from app.utils.parsing import parse_json_response
 
 _ALLOWED_TURN_KINDS = {"question", "proposal"}
-
-
-def _parse_json_response(text: str) -> dict[str, Any] | None:
-    cleaned = text.strip()
-    if not cleaned:
-        return None
-    match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
-    if not match:
-        return None
-    try:
-        return json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return None
 
 
 def _coerce_turn(payload: dict[str, Any] | None) -> dict[str, str] | None:
@@ -43,6 +30,7 @@ def _build_agentic_prompt(
         "1) 返答は1ターンのみで、質問か提案のどちらか一方。"
         "2) 会話開始時（履歴が空）は必ず質問で始める。"
         "   質問は具体的な不足情報を1〜3問だけ列挙する。"
+        "   質問は最大2ターンまでとし、3回目以降は必ず提案に切り替える。"
         "3) 質問は広い問いではなく、避難経路の地名/ルート、連絡先の番号と役割、"
         "   備蓄品の種類と数量、要支援者サポート体制などの具体情報を尋ねる。"
         "4) ユーザーの直近の回答が曖昧・不足している場合は、追加の質問。"
@@ -53,8 +41,8 @@ def _build_agentic_prompt(
         "8) 以下のテキストを参考に、足りない箇所や改善が必要な箇所にフォーカスすること:"
         "   context.search_reference_text は公式マニュアル"
         "PDFのテキスト。"
-        "   context.generated_plain_text は現在の生成マニュアルの"
-        "本文。"
+        "   context.generated_markdown は現在の生成マニュアルの"
+        "Markdown本文。"
         "出力は必ずJSONのみで次の形式にしてください:\n"
         '{"kind": "question" | "proposal", "content": "..."}\n'
     )
@@ -75,7 +63,7 @@ def build_agentic_turn(
     try:
         llm = get_llm()
         response = llm.invoke([HumanMessage(content=prompt)])
-        parsed = _parse_json_response(getattr(response, "content", ""))
+        parsed = parse_json_response(getattr(response, "content", ""))
         turn = _coerce_turn(parsed)
     except Exception:
         turn = None

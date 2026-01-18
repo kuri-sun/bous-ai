@@ -1,59 +1,32 @@
 import json
-import re
-from typing import Any, TypedDict
 
 from fastapi import HTTPException
 from langchain_core.messages import HumanMessage
 from playwright.async_api import async_playwright
 
+from app.schemas.manual import IllustrationImage, IllustrationPrompt, InputImage
 from app.services.llm import get_llm
-
-
-class InputImage(TypedDict):
-    description: str
-    public_url: str
-    gcs_uri: str | None
-    filename: str | None
-    content_type: str | None
-
-
-class IllustrationPrompt(TypedDict):
-    id: str
-    prompt: str
-    alt: str | None
-
-
-class IllustrationImage(TypedDict):
-    id: str
-    prompt: str
-    public_url: str
-    gcs_uri: str | None
-    content_type: str | None
-    alt: str | None
-
-
-def _parse_json_response(text: str) -> dict[str, Any] | None:
-    cleaned = text.strip()
-    if not cleaned:
-        return None
-    match = re.search(r"\{.*\}", cleaned, flags=re.DOTALL)
-    if not match:
-        return None
-    try:
-        return json.loads(match.group(0))
-    except json.JSONDecodeError:
-        return None
+from app.utils.parsing import parse_json_response
 
 
 def _build_markdown_prompt(
     memo: str,
     input_images: list[InputImage],
     manual_title: str,
-    agentic_proposal: str | None = None,
+    name: str,
+    author: str,
+    issued_on: str,
 ) -> str:
     instructions = (
         "あなたは日本語の防災マニュアルを作成するアシスタントです。"
-        "manual_titleがある場合は、必ずそのタイトルを見出しとして使用してください。"
+        "必ず最初の1ページはマニュアルの表紙とし、以下のみを含めてください:"
+        "1) マニュアルタイトル(manual_title)"
+        "2) 名称"
+        "3) 発行年月"
+        "4) 発行者"
+        "表紙はMarkdown上で専用のセクションとして作成し、"
+        "タイトルは中央寄せ、発行年月と発行者はページ下部に配置してください。"
+        "表紙で１ページ目を使うので、の２ページ目からセクション１を開始してください。"
         "メモと画像情報を参考に、PDF化に適したMarkdownを作成してください。"
         "入力画像は指定されたURLと説明を使ってMarkdownに差し込みます。"
         "input_imagesのpublic_urlはそれぞれ1回だけ使い、"
@@ -70,16 +43,17 @@ def _build_markdown_prompt(
         "各プロンプトに"
         "「イラスト内に文字は含めない（文字禁止）」を必ず含めてください。"
         "Markdownには見出しと段落を使い、長文は適度に分割してください。"
-        "追加で反映すべき提案がある場合は、それも必ず盛り込んでください。"
         "本文には提案・改善案・追加提案などの文言を入れず、"
         "純粋なマニュアル本文だけにしてください。"
         "余計な説明やコードフェンスは不要です。\n\n"
     )
     payload = {
         "manual_title": manual_title,
+        "name": name,
+        "author": author,
+        "issued_on": issued_on,
         "memo": memo,
         "input_images": input_images,
-        "agentic_proposal": agentic_proposal,
     }
     return (
         instructions
@@ -91,7 +65,6 @@ def _build_html_prompt(
     markdown: str,
     input_images: list[InputImage],
     illustration_images: list[IllustrationImage],
-    agentic_proposal: str | None = None,
 ) -> str:
     instructions = (
         "あなたは日本語の防災マニュアルをHTML化するアシスタントです。"
@@ -104,6 +77,8 @@ def _build_html_prompt(
         '<img class="manual-image">で出力してください。'
         "画像にstyle属性は付けないでください。"
         "画像には枠線やボーダーを付けないでください。"
+        '表紙は<section class="cover">で構成し、'
+        "タイトルは中央寄せ、発行年月と発行者は下部に配置してください。"
         "CSSは<head>内の<style>に含め、読みやすい構成にしてください。"
         "ページ分割が崩れないよう、A4印刷時の高さに合わせて"
         "各セクションの高さ・余白を調整し、"
@@ -121,6 +96,11 @@ def _build_html_prompt(
         "max-height: 90mm !important; }"
         ".image-block { margin: 6mm 0; display: flex; "
         "justify-content: center; }"
+        ".cover { min-height: 240mm; display: flex; flex-direction: column; "
+        "justify-content: space-between; margin-bottom: 0; "
+        "page-break-after: always; }"
+        ".cover-title { text-align: center; margin-top: 40mm; }"
+        ".cover-meta { text-align: center; margin-bottom: 10mm; }"
         "大きな表やリストは複数のsectionに分割して下さい。"
         "余計な説明やコードフェンスは不要です。\n\n"
     )
@@ -128,7 +108,6 @@ def _build_html_prompt(
         "markdown": markdown,
         "input_images": input_images,
         "illustration_images": illustration_images,
-        "agentic_proposal": agentic_proposal,
     }
     return (
         instructions
@@ -136,14 +115,40 @@ def _build_html_prompt(
     )
 
 
-def _strip_html_to_text(html: str) -> str:
-    # Remove style/script tags and their content
-    html = re.sub(r"<(script|style)[^>]*>.*?</\1>", "", html, flags=re.DOTALL)
-    # Replace tags with spaces
-    text = re.sub(r"<[^>]+>", " ", html)
-    # Collapse whitespace
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
+def _build_agentic_html_prompt(
+    previous_markdown: str,
+    previous_html: str,
+    proposal: str,
+    input_images: list[InputImage],
+    illustration_images: list[IllustrationImage],
+    manual_title: str,
+    name: str,
+    author: str,
+    issued_on: str,
+) -> str:
+    instructions = (
+        "あなたは日本語の防災マニュアルをHTML化するアシスタントです。"
+        "提案内容を反映してHTMLを更新してください。"
+        "previous_htmlのデザインとCSSは維持し、必要な本文のみを改善してください。"
+        "表紙レイアウトと画像配置ルールは崩さないでください。"
+        "outputは完成HTML(<!doctype html>から</html>まで)のみ。"
+        "余計な説明やコードフェンスは不要です。\n\n"
+    )
+    payload = {
+        "proposal": proposal,
+        "previous_markdown": previous_markdown,
+        "previous_html": previous_html,
+        "manual_title": manual_title,
+        "name": name,
+        "author": author,
+        "issued_on": issued_on,
+        "input_images": input_images,
+        "illustration_images": illustration_images,
+    }
+    return (
+        instructions
+        + f"INPUT(JSON):\n{json.dumps(payload, ensure_ascii=False, indent=2)}"
+    )
 
 
 def _ensure_input_images_in_markdown(
@@ -170,17 +175,21 @@ def generate_markdown_with_prompts(
     memo: str,
     input_images: list[InputImage],
     manual_title: str,
-    agentic_proposal: str | None = None,
+    name: str,
+    author: str,
+    issued_on: str,
 ) -> tuple[str, list[IllustrationPrompt]]:
     llm = get_llm()
     prompt = _build_markdown_prompt(
         memo,
         input_images,
         manual_title,
-        agentic_proposal,
+        name,
+        author,
+        issued_on,
     )
     response = llm.invoke([HumanMessage(content=prompt)])
-    payload = _parse_json_response(response.content or "")
+    payload = parse_json_response(response.content or "")
     if not payload:
         raise HTTPException(status_code=500, detail="Markdown generation failed")
 
@@ -217,18 +226,44 @@ def generate_manual_html_from_markdown(
     markdown: str,
     input_images: list[InputImage],
     illustration_images: list[IllustrationImage],
-    agentic_proposal: str | None = None,
 ) -> tuple[str, str]:
     llm = get_llm()
-    prompt = _build_html_prompt(
-        markdown, input_images, illustration_images, agentic_proposal
+    prompt = _build_html_prompt(markdown, input_images, illustration_images)
+    response = llm.invoke([HumanMessage(content=prompt)])
+    html = (response.content or "").strip()
+    if not html:
+        raise HTTPException(status_code=500, detail="HTML generation failed")
+    return html, markdown
+
+
+def generate_manual_html_with_proposal(
+    previous_markdown: str,
+    previous_html: str,
+    proposal: str,
+    input_images: list[InputImage],
+    illustration_images: list[IllustrationImage],
+    manual_title: str,
+    name: str,
+    author: str,
+    issued_on: str,
+) -> tuple[str, str]:
+    llm = get_llm()
+    prompt = _build_agentic_html_prompt(
+        previous_markdown,
+        previous_html,
+        proposal,
+        input_images,
+        illustration_images,
+        manual_title,
+        name,
+        author,
+        issued_on,
     )
     response = llm.invoke([HumanMessage(content=prompt)])
     html = (response.content or "").strip()
     if not html:
         raise HTTPException(status_code=500, detail="HTML generation failed")
-    plain = _strip_html_to_text(html)
-    return html, plain
+    return html, previous_markdown
 
 
 async def generate_manual_pdf(html: str) -> bytes:
