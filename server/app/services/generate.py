@@ -26,6 +26,8 @@ def _build_markdown_prompt(
         "4) 発行者"
         "表紙はMarkdown上で専用のセクションとして作成し、"
         "タイトルは中央寄せ、発行年月と発行者はページ下部に配置してください。"
+        "表紙タイトルは名称と「防災マニュアル」を改行して2行で表示し、"
+        "名称が空の場合は「防災マニュアル」だけを1行で表示してください。"
         "表紙で１ページ目を使うので、の２ページ目からセクション１を開始してください。"
         "メモと画像情報を参考に、PDF化に適したMarkdownを作成してください。"
         "入力画像は指定されたURLと説明を使ってMarkdownに差し込みます。"
@@ -79,6 +81,8 @@ def _build_html_prompt(
         "画像には枠線やボーダーを付けないでください。"
         '表紙は<section class="cover">で構成し、'
         "タイトルは中央寄せ、発行年月と発行者は下部に配置してください。"
+        "表紙タイトルは名称と「防災マニュアル」を改行して2行で表示し、"
+        "名称が空の場合は「防災マニュアル」だけを1行で表示してください。"
         "CSSは<head>内の<style>に含め、読みやすい構成にしてください。"
         "ページ分割が崩れないよう、A4印刷時の高さに合わせて"
         "各セクションの高さ・余白を調整し、"
@@ -119,31 +123,23 @@ def _build_agentic_html_prompt(
     previous_markdown: str,
     previous_html: str,
     proposal: str,
-    input_images: list[InputImage],
-    illustration_images: list[IllustrationImage],
-    manual_title: str,
-    name: str,
-    author: str,
-    issued_on: str,
 ) -> str:
     instructions = (
-        "あなたは日本語の防災マニュアルをHTML化するアシスタントです。"
-        "提案内容を反映してHTMLを更新してください。"
-        "previous_htmlのデザインとCSSは維持し、必要な本文のみを改善してください。"
-        "表紙レイアウトと画像配置ルールは崩さないでください。"
+        "あなたは、インプットされたほぼ完成された日本語の防災マニュアル(previous_html)を、最終調整するアシスタントです。"
+        "提案内容(proposal)を反映してHTML(previous_html)を更新してください。"
+        "previous_htmlの<head>とCSSは変更しないでください。"
+        "previous_htmlのレイアウトと画像配置ルールは絶対変更しないでください。"
+        "変更が必要な箇所以外は絶対変更しないでください。"
+        "ページ分割には、絶対配慮してください。"
         "outputは完成HTML(<!doctype html>から</html>まで)のみ。"
-        "余計な説明やコードフェンスは不要です。\n\n"
+        "outputにはバックスラッシュ(\\)やエスケープ文字列"
+        '(\\n, \\t, \\"など)を含めないでください。'
+        "余計な説明やコードフェンスは不要です。"
     )
     payload = {
         "proposal": proposal,
         "previous_markdown": previous_markdown,
         "previous_html": previous_html,
-        "manual_title": manual_title,
-        "name": name,
-        "author": author,
-        "issued_on": issued_on,
-        "input_images": input_images,
-        "illustration_images": illustration_images,
     }
     return (
         instructions
@@ -240,24 +236,12 @@ def generate_manual_html_with_proposal(
     previous_markdown: str,
     previous_html: str,
     proposal: str,
-    input_images: list[InputImage],
-    illustration_images: list[IllustrationImage],
-    manual_title: str,
-    name: str,
-    author: str,
-    issued_on: str,
 ) -> tuple[str, str]:
     llm = get_llm()
     prompt = _build_agentic_html_prompt(
         previous_markdown,
         previous_html,
         proposal,
-        input_images,
-        illustration_images,
-        manual_title,
-        name,
-        author,
-        issued_on,
     )
     response = llm.invoke([HumanMessage(content=prompt)])
     html = (response.content or "").strip()

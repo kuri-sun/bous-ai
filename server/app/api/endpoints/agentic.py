@@ -1,3 +1,5 @@
+import html as html_lib
+
 from fastapi import APIRouter, HTTPException
 
 from app.core.config import get_settings
@@ -182,6 +184,7 @@ async def agentic_decision(
         raise HTTPException(status_code=400, detail="Step2 markdown is missing")
     if not isinstance(previous_html, str) or not previous_html.strip():
         raise HTTPException(status_code=400, detail="Step2 html is missing")
+    previous_html = html_lib.unescape(previous_html)
 
     name = ""
     author = ""
@@ -225,12 +228,6 @@ async def agentic_decision(
         previous_markdown,
         previous_html,
         proposal.strip(),
-        uploaded_images,
-        illustration_images,
-        manual_title,
-        name,
-        author,
-        issued_on,
     )
     pdf_bytes = await generate_manual_pdf(html)
 
