@@ -1,4 +1,4 @@
-# bous-ai - 防災マニュアル生成アプリ
+# Bous AI (ボウサイ)
 
 ![サムネイル](./docs/thumbnail.png)
 
