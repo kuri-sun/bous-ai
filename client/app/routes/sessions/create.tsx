@@ -148,11 +148,8 @@ export default function SessionCreatePage() {
       <Modal>
         <div className="space-y-3">
           <h2 className="text-lg font-semibold text-gray-900">
-            住所・施設名を検索
+            基本情報を入力
           </h2>
-          <p className="text-sm text-gray-700">
-            候補から選択するとセッションを開始します。
-          </p>
           <form className="space-y-3" onSubmit={handleSubmitForm}>
             <div>
               <FieldLabel htmlFor="name" required>
@@ -191,7 +188,7 @@ export default function SessionCreatePage() {
               ) : null}
             </div>
             <div>
-              <FieldLabel htmlFor="place-search">施設名または住所</FieldLabel>
+              <FieldLabel htmlFor="place-search">住所</FieldLabel>
               <TextInput
                 id="place-search"
                 type="text"
