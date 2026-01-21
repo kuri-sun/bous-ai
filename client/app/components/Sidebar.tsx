@@ -61,26 +61,27 @@ export function Sidebar({ sessions, isLoading = false }: SidebarProps) {
           const placeAddress = session.place?.formatted_address?.trim();
           const displayName =
             placeName ?? placeAddress ?? `セッション ${session.id.slice(0, 8)}`;
+          const sessionPath =
+            session.status === "done"
+              ? `/sessions/${session.id}/summary`
+              : `/sessions/${session.id}`;
           return (
             <div
               key={session.id}
-              className={`w-full border-b border-gray-100 px-3 py-2 text-left text-sm ${
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(sessionPath)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  navigate(sessionPath);
+                }
+              }}
+              className={`w-full cursor-pointer border-b border-gray-100 px-3 py-2 text-left text-sm hover:bg-gray-50 ${
                 activeId === session.id ? "bg-gray-50" : ""
               }`}
             >
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    session.status === "done"
-                      ? `/sessions/${session.id}/summary`
-                      : `/sessions/${session.id}`,
-                  )
-                }
-                className="w-full text-left hover:text-gray-900"
-              >
-                <p className="font-semibold text-gray-900">{displayName}</p>
-              </button>
+              <p className="font-semibold text-gray-900">{displayName}</p>
               <div className="mt-2 flex items-center justify-end">
                 <Button
                   type="button"

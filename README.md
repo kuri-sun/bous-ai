@@ -8,11 +8,11 @@
 
 ## 開発環境
 
-Node.js と Python 3.11+ が必要です。
+Node.js と Python 3.11+ が必要。
 
 ### 環境変数
 
-初回起動時、フロントエンドとバックエンドで環境変数を設定してください。
+まずは、フロントエンドとバックエンドで環境変数を設定する。
 
 - `server/.env` を作成し、 `GEMINI_API_KEY` などの鍵を配置。（`server/.env.example`を参照。）
 - `client/.env` (または `.env.local`) を作成し、 `API_BASE` 等を配置。（`client/.env.example`を参照。）
@@ -35,7 +35,7 @@ python -m pip install -r requirements-dev.txt
 uvicorn app.main:app --reload
 ```
 
-### Docker
+Dockerを使用して、ローカルバックエンドをRunしたい場合:
 
 ```sh
 docker compose up --build
