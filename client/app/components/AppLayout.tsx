@@ -23,7 +23,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             to="/"
             className="text-lg font-semibold text-gray-900 hover:text-gray-700"
           >
-            bous-ai
+            Bous AI
           </Link>
         </div>
       </header>
