@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Set VITE_API_BASE for client
+        run: |
+          echo "VITE_API_BASE=${{ secrets.VITE_API_BASE }}" > client/.env
       - name: Build client
         working-directory: client
         run: npm ci && npm run build
