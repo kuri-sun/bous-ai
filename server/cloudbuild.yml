@@ -5,11 +5,11 @@ substitutions:
   _SERVICE: bousai-api-service
   _APP_ENV: production
   _GEMINI_MODEL: gemini-3-flash-preview
-  _GCP_PROJECT: your_project_id
-  _GCS_BUCKET: your_bucket_name
   _GCS_OUTPUT_PREFIX: vision-output
-  # _GOOGLE_API_KEY:
-  # _GOOGLE_SEARCH_CX:
+  # _GCS_BUCKET: your_bucket_name
+  # _GEMINI_API_KEY: your_gemini_api_key
+  # _GOOGLE_API_KEY: your_google_api_key
+  # _GOOGLE_SEARCH_CX: your_search_engine_context
 
 steps:
   # ステップ1: Docker イメージを作成
@@ -68,11 +68,13 @@ steps:
         "--set-env-vars",
         "GEMINI_MODEL=${_GEMINI_MODEL}",
         "--set-env-vars",
+        "GEMINI_API_KEY=${_GEMINI_API_KEY}",
+        "--set-env-vars",
         "GOOGLE_API_KEY=${_GOOGLE_API_KEY}",
         "--set-env-vars",
         "GOOGLE_SEARCH_CX=${_GOOGLE_SEARCH_CX}",
         "--set-env-vars",
-        "GCP_PROJECT=${_GCP_PROJECT}",
+        "GCP_PROJECT=$PROJECT_ID",
         "--set-env-vars",
         "GCS_BUCKET=${_GCS_BUCKET}",
         "--set-env-vars",
