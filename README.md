@@ -1,6 +1,7 @@
 # Bous AI (ボウサイ)
 
-![サムネイル](./docs/thumbnail.png)
+[![サムネイル](./docs/thumbnail.png)](https://www.youtube.com/watch?v=wToCMyk2sgI)
+(クリックすると YouTube の紹介動画に飛びます)
 
 ## 全体構成
 
@@ -40,8 +41,3 @@ Dockerを使用して、ローカルバックエンドをRunしたい場合:
 ```sh
 docker compose up --build
 ```
-
-## 参照
-
-- [Zenn記事]()
-- [Youtube]()
