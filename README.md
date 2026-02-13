@@ -1,11 +1,11 @@
 # Bous AI (ボウサイ)
 
-[![サムネイル](./docs/thumbnail.png)](https://www.youtube.com/watch?v=wToCMyk2sgI)
+[![サムネイル](./assets/thumbnail.png)](https://www.youtube.com/watch?v=wToCMyk2sgI)
 (クリックすると YouTube の紹介動画に飛びます)
 
 ## 全体構成
 
-![システム構成図](./docs/system.png)
+![システム構成図](./assets/system.png)
 
 ## 開発環境
 
